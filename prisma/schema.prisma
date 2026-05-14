@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  SCHOOL_STAFF
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentStatus {
+  DRAFT
+  DETAILS_PENDING
+  PHOTO_PENDING
+  COMPLETED
+}
+
+enum UploadCategory {
+  SCHOOL_LOGO
+  SCHOOL_UNIFORM_BOY
+  SCHOOL_UNIFORM_GIRL
+  STUDENT_PHOTO
+  STUDENT_COMPOSITE
+  STUDENT_ID_CARD
+  EXPORT_PDF
+  CSV_IMPORT
+}
+
+enum RefreshTokenStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  REFRESH_TOKEN
+  CREATE_SCHOOL
+  UPDATE_SCHOOL
+  DELETE_SCHOOL
+  CREATE_STAFF
+  UPDATE_STAFF
+  DELETE_STAFF
+  CREATE_STUDENT
+  UPDATE_STUDENT
+  DELETE_STUDENT
+  PUBLIC_STUDENT_SUBMIT
+  STUDENT_PHOTO_UPLOAD
+  CSV_IMPORT
+  EXPORT_PDF
+  IMPERSONATE_SCHOOL
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  role          UserRole
+  isActive      Boolean        @default(true)
+  schoolId      String?
+  school        School?        @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]     @relation("AuditActor")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([schoolId])
+  @@index([role])
+}
+
+model School {
+  id               String         @id @default(cuid())
+  name             String
+  contactPerson    String
+  email            String         @unique
+  phone            String
+  address          String
+  brandColor       String
+  secondaryColor   String?
+  publicSlug       String         @unique
+  isActive         Boolean        @default(true)
+  selectedTemplateId String
+  logoFileId       String?
+  uniformBoyFileId String?
+  uniformGirlFileId String?
+  logoFile         FileAsset?     @relation("SchoolLogo", fields: [logoFileId], references: [id], onDelete: SetNull)
+  uniformBoyFile   FileAsset?     @relation("SchoolUniformBoy", fields: [uniformBoyFileId], references: [id], onDelete: SetNull)
+  uniformGirlFile  FileAsset?     @relation("SchoolUniformGirl", fields: [uniformGirlFileId], references: [id], onDelete: SetNull)
+  users            User[]
+  students         Student[]
+  auditLogs        AuditLog[]     @relation("AuditSchool")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([publicSlug])
+}
+
+model Student {
+  id                    String        @id @default(cuid())
+  schoolId              String
+  school                School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  firstName             String
+  lastName              String?
+  fullName              String
+  rollNumber            String
+  admissionNumber       String?
+  gender                Gender
+  dateOfBirth           DateTime?
+  classValue            String
+  sectionValue          String
+  fatherName            String?
+  motherName            String?
+  guardianPhone         String?
+  emergencyPhone        String?
+  address               String?
+  bloodGroup            String?
+  transportRoute        String?
+  photoFileId           String?
+  compositeFileId       String?
+  generatedCardFileId   String?
+  photoFile             FileAsset?    @relation("StudentPhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+  compositeFile         FileAsset?    @relation("StudentComposite", fields: [compositeFileId], references: [id], onDelete: SetNull)
+  generatedCardFile     FileAsset?    @relation("StudentCard", fields: [generatedCardFileId], references: [id], onDelete: SetNull)
+  isDetailsCompleted    Boolean       @default(false)
+  status                StudentStatus @default(DRAFT)
+  isImported            Boolean       @default(false)
+  submittedFromPublic   Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@unique([schoolId, rollNumber])
+  @@index([schoolId, classValue, sectionValue])
+  @@index([schoolId, status])
+  @@index([schoolId, isDetailsCompleted])
+}
+
+model FileAsset {
+  id              String        @id @default(cuid())
+  originalName    String
+  mimeType        String
+  extension       String
+  size            Int
+  path            String
+  publicUrl       String
+  category        UploadCategory
+  createdAt       DateTime      @default(now())
+
+  schoolLogoFor         School[] @relation("SchoolLogo")
+  schoolUniformBoyFor   School[] @relation("SchoolUniformBoy")
+  schoolUniformGirlFor  School[] @relation("SchoolUniformGirl")
+  studentPhotoFor       Student[] @relation("StudentPhoto")
+  studentCompositeFor   Student[] @relation("StudentComposite")
+  studentCardFor        Student[] @relation("StudentCard")
+}
+
+model RefreshToken {
+  id           String             @id @default(cuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String             @unique
+  expiresAt    DateTime
+  status       RefreshTokenStatus @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  actorUserId   String?
+  actorUser     User?      @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  schoolId      String?
+  school        School?    @relation("AuditSchool", fields: [schoolId], references: [id], onDelete: SetNull)
+  action        AuditAction
+  entityType    String
+  entityId      String?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime   @default(now())
+
+  @@index([actorUserId])
+  @@index([schoolId])
+  @@index([action])
+}

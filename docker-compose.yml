@@ -1,0 +1,56 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: school-id-api
+    restart: unless-stopped
+    working_dir: /app
+    command: npm run dev
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/dist
+      - api_uploads:/app/uploads
+    networks:
+      - school-id-network
+
+  postgres:
+    image: postgres:16
+    container_name: school-id-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: school_id_cards
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # test: ["CMD-SHELL", "pg_isready -U postgres -d school_id_cards"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - school-id-network
+
+networks:
+  school-id-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  api_uploads:

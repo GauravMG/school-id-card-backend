@@ -1,0 +1,517 @@
+{
+  "info": {
+    "_postman_id": "9d4cc1b5-2b5e-4e4f-8f24-9a9b4eaa1001",
+    "name": "School ID Card Backend API",
+    "description": "Postman collection for the School ID Card backend. Collection-level Bearer auth uses {{access_token}} and login/refresh requests automatically store the latest token in collection variables for reuse.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "access_token", "value": "" },
+    { "key": "school_id", "value": "" },
+    { "key": "school_slug", "value": "" },
+    { "key": "staff_id", "value": "" },
+    { "key": "student_id", "value": "" },
+    { "key": "export_file_url", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{superadmin_email}}\",\n  \"password\": \"{{superadmin_password}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.collectionVariables.set('access_token', json.data.accessToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/auth/refresh", "host": ["{{base_url}}"], "path": ["api", "auth", "refresh"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.collectionVariables.set('access_token', json.data.accessToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/auth/logout", "host": ["{{base_url}}"], "path": ["api", "auth", "logout"] }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api", "auth", "me"] }
+          }
+        },
+        {
+          "name": "Impersonate School",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schoolId\": \"{{school_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/impersonate-school", "host": ["{{base_url}}"], "path": ["api", "auth", "impersonate-school"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.collectionVariables.set('access_token', json.data.accessToken); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Templates",
+      "item": [
+        {
+          "name": "List Templates",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/templates", "host": ["{{base_url}}"], "path": ["api", "templates"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schools",
+      "item": [
+        {
+          "name": "List Schools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/schools", "host": ["{{base_url}}"], "path": ["api", "schools"] }
+          }
+        },
+        {
+          "name": "Create School",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sunrise Public School\",\n  \"contactPerson\": \"Rahul Verma\",\n  \"email\": \"sunrise@example.com\",\n  \"phone\": \"9876543210\",\n  \"address\": \"Delhi\",\n  \"brandColor\": \"#1E3A8A\",\n  \"secondaryColor\": \"#F59E0B\",\n  \"selectedTemplateId\": \"template-1\",\n  \"publicSlug\": \"sunrise-public-school\",\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/schools", "host": ["{{base_url}}"], "path": ["api", "schools"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) pm.collectionVariables.set('school_id', json.data.id);",
+                  "if (json?.data?.publicSlug) pm.collectionVariables.set('school_slug', json.data.publicSlug);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get School",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/schools/{{school_id}}", "host": ["{{base_url}}"], "path": ["api", "schools", "{{school_id}}"] }
+          }
+        },
+        {
+          "name": "Update School",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contactPerson\": \"Updated Contact\",\n  \"brandColor\": \"#0F766E\",\n  \"secondaryColor\": \"#E11D48\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/schools/{{school_id}}", "host": ["{{base_url}}"], "path": ["api", "schools", "{{school_id}}"] }
+          }
+        },
+        {
+          "name": "Upload School Assets",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "logo", "type": "file", "src": "" },
+                { "key": "uniformBoy", "type": "file", "src": "" },
+                { "key": "uniformGirl", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/uploads/schools/{{school_id}}/assets", "host": ["{{base_url}}"], "path": ["api", "uploads", "schools", "{{school_id}}", "assets"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Staff",
+      "item": [
+        {
+          "name": "List Staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/staff/schools/{{school_id}}/staff", "host": ["{{base_url}}"], "path": ["api", "staff", "schools", "{{school_id}}", "staff"] }
+          }
+        },
+        {
+          "name": "Create Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"School Operator\",\n  \"email\": \"operator@example.com\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/staff/schools/{{school_id}}/staff", "host": ["{{base_url}}"], "path": ["api", "staff", "schools", "{{school_id}}", "staff"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) pm.collectionVariables.set('staff_id', json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Staff",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated School Operator\",\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/staff/schools/{{school_id}}/staff/{{staff_id}}", "host": ["{{base_url}}"], "path": ["api", "staff", "schools", "{{school_id}}", "staff", "{{staff_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Students",
+      "item": [
+        {
+          "name": "List Students",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/students/schools/{{school_id}}/students?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "schools", "{{school_id}}", "students"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Students With Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/students/schools/{{school_id}}/students?page=1&limit=20&classValue=5§ionValue=A&isDetailsCompleted=true&search=101",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "schools", "{{school_id}}", "students"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "classValue", "value": "5" },
+                { "key": "sectionValue", "value": "A" },
+                { "key": "isDetailsCompleted", "value": "true" },
+                { "key": "search", "value": "101" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Aarav\",\n  \"lastName\": \"Sharma\",\n  \"rollNumber\": \"101\",\n  \"admissionNumber\": \"ADM-101\",\n  \"gender\": \"MALE\",\n  \"dateOfBirth\": \"2014-05-15\",\n  \"classValue\": \"5\",\n  \"sectionValue\": \"A\",\n  \"fatherName\": \"Rajesh Sharma\",\n  \"motherName\": \"Pooja Sharma\",\n  \"guardianPhone\": \"9876543210\",\n  \"emergencyPhone\": \"9876543211\",\n  \"address\": \"Delhi\",\n  \"bloodGroup\": \"B+\",\n  \"transportRoute\": \"Route 1\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/students/schools/{{school_id}}/students", "host": ["{{base_url}}"], "path": ["api", "students", "schools", "{{school_id}}", "students"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) pm.collectionVariables.set('student_id', json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guardianPhone\": \"9999999999\",\n  \"address\": \"Updated Address, Delhi\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/students/schools/{{school_id}}/students/{{student_id}}", "host": ["{{base_url}}"], "path": ["api", "students", "schools", "{{school_id}}", "students", "{{student_id}}"] }
+          }
+        },
+        {
+          "name": "Import Students CSV",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "csv", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/students/schools/{{school_id}}/students/import-csv", "host": ["{{base_url}}"], "path": ["api", "students", "schools", "{{school_id}}", "students", "import-csv"] }
+          }
+        },
+        {
+          "name": "Upload Student Photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "photo", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/students/schools/{{school_id}}/students/{{student_id}}/photo", "host": ["{{base_url}}"], "path": ["api", "students", "schools", "{{school_id}}", "students", "{{student_id}}", "photo"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public Submission",
+      "item": [
+        {
+          "name": "Get Public School By Slug",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/public/schools/{{school_slug}}", "host": ["{{base_url}}"], "path": ["api", "public", "schools", "{{school_slug}}"] }
+          }
+        },
+        {
+          "name": "Get Student By Roll Number",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/public/schools/{{school_slug}}/student?rollNumber=101",
+              "host": ["{{base_url}}"],
+              "path": ["api", "public", "schools", "{{school_slug}}", "student"],
+              "query": [
+                { "key": "rollNumber", "value": "101" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Public Student",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Aarav\",\n  \"lastName\": \"Sharma\",\n  \"rollNumber\": \"101\",\n  \"admissionNumber\": \"ADM-101\",\n  \"gender\": \"MALE\",\n  \"dateOfBirth\": \"2014-05-15\",\n  \"classValue\": \"5\",\n  \"sectionValue\": \"A\",\n  \"fatherName\": \"Rajesh Sharma\",\n  \"motherName\": \"Pooja Sharma\",\n  \"guardianPhone\": \"9876543210\",\n  \"emergencyPhone\": \"9876543211\",\n  \"address\": \"Delhi\",\n  \"bloodGroup\": \"B+\",\n  \"transportRoute\": \"Route 1\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/public/schools/{{school_slug}}/student", "host": ["{{base_url}}"], "path": ["api", "public", "schools", "{{school_slug}}", "student"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) pm.collectionVariables.set('student_id', json.data.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Exports",
+      "item": [
+        {
+          "name": "Export Students PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pageSize\": \"A4\",\n  \"studentIds\": [\"{{student_id}}\"]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/exports/schools/{{school_id}}/pdf", "host": ["{{base_url}}"], "path": ["api", "exports", "schools", "{{school_id}}", "pdf"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const url = json?.data?.pdf?.publicUrl || json?.data?.pdf?.url || '';",
+                  "if (url) pm.collectionVariables.set('export_file_url', url);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Export Students PDF By Filters",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pageSize\": \"A3\",\n  \"filters\": {\n    \"classValue\": \"5\",\n    \"sectionValue\": \"A\",\n    \"isDetailsCompleted\": true\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/exports/schools/{{school_id}}/pdf", "host": ["{{base_url}}"], "path": ["api", "exports", "schools", "{{school_id}}", "pdf"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "item": [
+        {
+          "name": "List Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/audit-logs?schoolId={{school_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "audit-logs"],
+              "query": [
+                { "key": "schoolId", "value": "{{school_id}}" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
