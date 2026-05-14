@@ -166,6 +166,19 @@ model FileAsset {
   studentCardFor        Student[] @relation("StudentCard")
 }
 
+model CardTemplate {
+  id          String   @id
+  name        String
+  description String?
+  htmlContent String   @db.Text
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
 model RefreshToken {
   id           String             @id @default(cuid())
   userId       String

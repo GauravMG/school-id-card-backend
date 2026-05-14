@@ -1,8 +1,9 @@
-import { getTemplateRegistry } from '../../templates/registry';
+import { prisma } from '../../lib/prisma';
 
 export const listTemplates = async () => {
-    return getTemplateRegistry().map((id) => ({
-        id,
-        name: id.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-    }));
+    return prisma.cardTemplate.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, description: true, sortOrder: true },
+        orderBy: { sortOrder: 'asc' }
+    });
 };

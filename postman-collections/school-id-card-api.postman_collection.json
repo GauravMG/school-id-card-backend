@@ -142,10 +142,10 @@
         {
           "name": "List Templates",
           "request": {
-            "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{base_url}}/api/templates", "host": ["{{base_url}}"], "path": ["api", "templates"] }
+            "url": { "raw": "{{base_url}}/api/templates", "host": ["{{base_url}}"], "path": ["api", "templates"] },
+            "description": "Returns the list of active ID card templates stored in the database. Use the returned `id` values as `selectedTemplateId` when creating or updating a school."
           }
         }
       ]

@@ -4,6 +4,7 @@ import { ApiError } from '../../utils/ApiError';
 import { getPagination } from '../../utils/pagination';
 import { saveFileAssetRecord } from '../../services/file-storage.service';
 import { composeStudentUniformImage } from '../../services/image-composite.service';
+import { generateStudentIdCard } from '../../services/id-card-generator.service';
 
 const computeStudentStatus = (studentLike: any): { isDetailsCompleted: boolean; status: StudentStatus } => {
     const requiredFields = [
@@ -115,13 +116,23 @@ export const listStudents = async (schoolId: string, query: any) => {
 export const uploadStudentPhoto = async (schoolId: string, studentId: string, file: Express.Multer.File) => {
     const student = await prisma.student.findFirst({
         where: { id: studentId, schoolId },
-        include: { school: { include: { uniformBoyFile: true, uniformGirlFile: true } } }
+        include: {
+            school: {
+                include: {
+                    logoFile: true,
+                    uniformBoyFile: true,
+                    uniformGirlFile: true
+                }
+            }
+        }
     });
 
     if (!student) throw new ApiError(404, 'Student not found');
 
+    // 1. Persist the original photo file asset
     const photoAsset = await saveFileAssetRecord(file, UploadCategory.STUDENT_PHOTO);
 
+    // 2. Resolve the gender-appropriate uniform path
     const uniformPath =
         student.gender === 'MALE'
             ? student.school.uniformBoyFile?.path
@@ -129,11 +140,14 @@ export const uploadStudentPhoto = async (schoolId: string, studentId: string, fi
                 ? student.school.uniformGirlFile?.path
                 : undefined;
 
+    // 3. Generate smart composite: BG-removed face cropped onto uniform image
     const compositePath = await composeStudentUniformImage({
         studentPhotoPath: file.path,
         uniformPath,
         outputFileName: `${student.id}-composite.png`
     });
+
+    const compositePublicUrl = `/${compositePath.replace(/\\/g, '/')}`;
 
     const compositeAsset = await prisma.fileAsset.create({
         data: {
@@ -142,27 +156,56 @@ export const uploadStudentPhoto = async (schoolId: string, studentId: string, fi
             extension: 'png',
             size: 0,
             path: compositePath,
-            publicUrl: `/${compositePath.replace(/\\/g, '/')}`,
+            publicUrl: compositePublicUrl,
             category: UploadCategory.STUDENT_COMPOSITE
         }
     });
 
-    const statusData = computeStudentStatus({
-        ...student,
-        photoFileId: photoAsset.id
-    });
+    // 4. Render the school's selected ID card template to a PNG screenshot
+    let cardAsset: Awaited<ReturnType<typeof prisma.fileAsset.create>> | null = null;
+    try {
+        const cardResult = await generateStudentIdCard({
+            student: {
+                ...student,
+                compositeFile: { path: compositePath, publicUrl: compositePublicUrl },
+                photoFile: { path: file.path, publicUrl: photoAsset.publicUrl }
+            },
+            school: student.school,
+            outputFileName: `${student.id}-card.png`
+        });
+
+        cardAsset = await prisma.fileAsset.create({
+            data: {
+                originalName: `${student.fullName}-id-card.png`,
+                mimeType: 'image/png',
+                extension: 'png',
+                size: cardResult.size,
+                path: cardResult.path,
+                publicUrl: cardResult.publicUrl,
+                category: UploadCategory.STUDENT_ID_CARD
+            }
+        });
+    } catch (err) {
+        // Card generation is best-effort; photo upload must not fail because of it
+        console.error('[uploadStudentPhoto] ID card generation failed:', err);
+    }
+
+    // 5. Compute new status and update student record
+    const statusData = computeStudentStatus({ ...student, photoFileId: photoAsset.id });
 
     return prisma.student.update({
         where: { id: student.id },
         data: {
             photoFileId: photoAsset.id,
             compositeFileId: compositeAsset.id,
+            generatedCardFileId: cardAsset?.id ?? undefined,
             isDetailsCompleted: statusData.isDetailsCompleted,
             status: statusData.status
         },
         include: {
             photoFile: true,
-            compositeFile: true
+            compositeFile: true,
+            generatedCardFile: true
         }
     });
 };

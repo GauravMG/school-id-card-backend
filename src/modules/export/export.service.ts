@@ -2,7 +2,7 @@ import fs from 'fs';
 import { prisma } from '../../lib/prisma';
 import { ApiError } from '../../utils/ApiError';
 import { getPdfLayout } from '../../utils/id-card-layout';
-import { renderTemplateHtml } from '../../templates/registry';
+import { getTemplateRenderer } from '../../services/template-renderer';
 import { renderExportPageHtml } from '../../templates/print/export-page';
 import { renderCardsPdf } from '../../services/id-card-render.service';
 import { UploadCategory } from '@prisma/client';
@@ -39,6 +39,7 @@ export const exportSchoolStudentsPdf = async (schoolId: string, body: any) => {
     });
 
     const layout = getPdfLayout(body.pageSize);
+    const renderCard = await getTemplateRenderer(school.selectedTemplateId);
 
     const cardsHtml = students.map((student) => {
         const uniformUrl =
@@ -48,14 +49,14 @@ export const exportSchoolStudentsPdf = async (schoolId: string, body: any) => {
                     ? school.uniformGirlFile?.publicUrl
                     : undefined;
 
-        return renderTemplateHtml(school.selectedTemplateId, {
+        return renderCard({
             school,
             student: {
                 ...student,
-                photoUrl: student.photoFile?.publicUrl,
-                compositeUrl: student.compositeFile?.publicUrl
+                photoUrl: '',
+                compositeUrl: student.compositeFile?.publicUrl ?? student.photoFile?.publicUrl ?? ''
             },
-            uniformUrl
+            uniformUrl: uniformUrl ?? ''
         });
     });
 

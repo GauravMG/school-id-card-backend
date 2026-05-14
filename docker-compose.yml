@@ -6,7 +6,7 @@ services:
     container_name: school-id-api
     restart: unless-stopped
     working_dir: /app
-    command: npm run dev
+    command: sh -c "npx prisma db push && npm run dev"
     ports:
       - "4000:4000"
     env_file:
@@ -22,6 +22,28 @@ services:
       - /app/node_modules
       - /app/dist
       - api_uploads:/app/uploads
+      # Persists the @imgly/background-removal-node ONNX model (~80 MB) so it is
+      # only downloaded once instead of on every container restart.
+      - imgly_model_cache:/root/.cache
+    networks:
+      - school-id-network
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: school-id-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./web/.env
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./web:/app
+      - /app/node_modules
     networks:
       - school-id-network
 
@@ -54,3 +76,4 @@ networks:
 volumes:
   postgres_data:
   api_uploads:
+  imgly_model_cache:
