@@ -18,14 +18,16 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LoginIcon from '@mui/icons-material/Login';
+import ManIcon from '@mui/icons-material/Man';
+import WomanIcon from '@mui/icons-material/Woman';
 import { Box } from '@mui/material';
 import UserRoundIcon from 'assets/images/users/user-round.svg';
 
-export default function GenericTable({ 
-  data = [], 
-  columns, 
-  onEdit, 
-  onDelete, 
+export default function GenericTable({
+  data = [],
+  columns,
+  onEdit,
+  onDelete,
   onUpload,
   onLoginAs,
   emptyMessage = "No records found.",
@@ -36,7 +38,8 @@ export default function GenericTable({
   onRowsPerPageChange,
   selectable = false,
   selectedIds = [],
-  onSelectChange
+  onSelectChange,
+  hideEdit = false
 }) {
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -145,6 +148,28 @@ export default function GenericTable({
                               sx={{ width: 40, height: 40, borderRadius: 1, objectFit: 'cover', border: '1px solid #eee' }}
                               onError={(e) => { e.target.src = UserRoundIcon; }}
                             />
+                          ) : col.type === 'student-photo' ? (
+                            (() => {
+                              const photoUrl = row.compositeFile?.publicUrl || row.photoFile?.publicUrl;
+                              if (photoUrl) {
+                                return (
+                                  <Box
+                                    component="img"
+                                    src={`${baseUrl}${photoUrl}`}
+                                    sx={{ width: 40, height: 40, borderRadius: 1, objectFit: 'cover', border: '1px solid #eee' }}
+                                    onError={(e) => { e.target.src = UserRoundIcon; }}
+                                  />
+                                );
+                              }
+                              const isFemale = row.gender === 'FEMALE';
+                              return (
+                                <Box sx={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isFemale ? '#fce4ec' : '#e3f2fd', borderRadius: 1, border: '1px solid #eee' }}>
+                                  {isFemale
+                                    ? <WomanIcon sx={{ color: '#e91e63', fontSize: 28 }} />
+                                    : <ManIcon sx={{ color: '#1976d2', fontSize: 28 }} />}
+                                </Box>
+                              );
+                            })()
                           ) : col.type === 'copy-link' ? (
                             value ? (
                               <Tooltip title="Copy Link">
@@ -160,9 +185,11 @@ export default function GenericTable({
                       );
                     })}
                     <TableCell align="right">
-                      <IconButton color="primary" onClick={() => onEdit(row)}>
-                        <EditIcon />
-                      </IconButton>
+                      {!hideEdit && (
+                        <IconButton color="primary" onClick={() => onEdit(row)}>
+                          <EditIcon />
+                        </IconButton>
+                      )}
                       {onLoginAs && (
                         <Tooltip title="Login as School">
                           <IconButton color="secondary" onClick={() => onLoginAs(row)}>

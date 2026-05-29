@@ -7,6 +7,7 @@ import publicRoutes from './public.routes';
 import uploadRoutes from './upload.routes';
 import templateRoutes from './template.routes';
 import exportRoutes from './export.routes';
+import exportSettingRoutes from './export-setting.routes';
 import auditRoutes from './audit.routes';
 
 const router = Router();
@@ -19,6 +20,7 @@ router.use('/public', publicRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/templates', templateRoutes);
 router.use('/exports', exportRoutes);
+router.use('/export-settings', exportSettingRoutes);
 router.use('/audit-logs', auditRoutes);
 
 export default router;

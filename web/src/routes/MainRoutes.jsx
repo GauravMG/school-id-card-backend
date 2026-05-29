@@ -15,6 +15,7 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 const Schools = Loadable(lazy(() => import('views/utilities/Schools')));
 const Students = Loadable(lazy(() => import('views/utilities/Students')));
 const Staff = Loadable(lazy(() => import('views/utilities/Staff')));
+const ExportSettings = Loadable(lazy(() => import('views/utilities/ExportSettings')));
 // const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
 
 // sample page routing
@@ -51,6 +52,14 @@ const MainRoutes = {
     {
       path: 'students',
       element: <Students />
+    },
+    {
+      path: 'export-settings',
+      element: (
+        <RoleGuard allowedRoles={['SUPERADMIN']}>
+          <ExportSettings />
+        </RoleGuard>
+      )
     }
   ]
 };

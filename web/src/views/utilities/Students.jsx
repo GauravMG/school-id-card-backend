@@ -12,6 +12,7 @@ import { Tabs, Tab, CircularProgress, Box, TextField, MenuItem } from '@mui/mate
 import AddIcon from '@mui/icons-material/Add';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DownloadIcon from '@mui/icons-material/Download';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
@@ -62,6 +63,26 @@ export default function Students() {
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
+  const SHOW_IMPORT_CSV = true;
+  const SHOW_ADD_STUDENT = false;
+  const SHOW_EDIT_STUDENT = false;
+
+  const handleDownloadCsvTemplate = () => {
+    const headers = [
+      'rollNumber', 'firstName', 'lastName', 'gender',
+      'classValue', 'sectionValue', 'fatherName', 'motherName',
+      'guardianPhone', 'admissionNumber', 'address'
+    ];
+    const csv = headers.join(',') + '\n';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'students_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const { data: studentsResponse, isLoading: isStudentsLoading } = useGetStudentsQuery({
     schoolId: selectedSchoolId,
     page: page + 1,
@@ -70,7 +91,8 @@ export default function Students() {
     sectionValue: sectionFilter === 'all' ? undefined : sectionFilter,
     isDetailsCompleted: tabValue === 1 ? 'true' : 'false'
   }, {
-    skip: !selectedSchoolId
+    skip: !selectedSchoolId,
+    refetchOnMountOrArgChange: true
   });
 
   const { data: schoolDetailsResponse } = useGetSchoolQuery(selectedSchoolId, {
@@ -198,20 +220,31 @@ export default function Students() {
             )}
             <Button
               variant="outlined"
-              startIcon={<CloudUploadIcon />}
-              onClick={() => setImportDialogOpen(true)}
-              disabled={!selectedSchoolId}
+              startIcon={<DownloadIcon />}
+              onClick={handleDownloadCsvTemplate}
             >
-              Import CSV
+              CSV Template
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpen}
-              disabled={!selectedSchoolId}
-            >
-              Add Student
-            </Button>
+            {SHOW_IMPORT_CSV && (
+              <Button
+                variant="outlined"
+                startIcon={<CloudUploadIcon />}
+                onClick={() => setImportDialogOpen(true)}
+                disabled={!selectedSchoolId}
+              >
+                Import CSV
+              </Button>
+            )}
+            {SHOW_ADD_STUDENT && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleOpen}
+                disabled={!selectedSchoolId}
+              >
+                Add Student
+              </Button>
+            )}
           </Stack>
         </Stack>
 
@@ -274,6 +307,7 @@ export default function Students() {
             columns={studentColumns}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            hideEdit={!SHOW_EDIT_STUDENT}
             emptyMessage="No students found in this category."
             page={page}
             rowsPerPage={rowsPerPage}

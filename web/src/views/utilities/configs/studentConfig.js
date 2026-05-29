@@ -1,5 +1,5 @@
 export const studentColumns = [
-  { id: 'compositeFile.publicUrl', label: 'Photo', type: 'image' },
+  { id: 'photo', label: 'Photo', type: 'student-photo' },
   { id: 'firstName', label: 'First Name', type: 'text' },
   { id: 'lastName', label: 'Last Name', type: 'text' },
   { id: 'rollNumber', label: 'Roll Number', type: 'text' },

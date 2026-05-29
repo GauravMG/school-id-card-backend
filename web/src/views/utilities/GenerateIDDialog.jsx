@@ -7,8 +7,14 @@ import {
 import PrintIcon from '@mui/icons-material/Print';
 import DownloadIcon from '@mui/icons-material/Download';
 import { jsPDF } from 'jspdf';
+import { useGetActiveExportSettingsQuery } from 'store/api/exportSettingApi';
 
-const LAYOUTS = {
+const PAGE_DIMENSIONS = {
+  A4: { width: 210, height: 297 },
+  A3: { width: 297, height: 420 },
+};
+
+const DEFAULT_LAYOUTS = {
   A4: { width: 210, height: 297, cols: 2, rows: 2, cardsPerPage: 4 },
   A3: { width: 297, height: 420, cols: 2, rows: 3, cardsPerPage: 6 },
 };
@@ -16,11 +22,36 @@ const LAYOUTS = {
 const MARGIN = 10;
 const GAP = 5;
 
+function buildLayouts(settings) {
+  if (!settings || settings.length === 0) return DEFAULT_LAYOUTS;
+  const layouts = {};
+  settings.forEach((s) => {
+    const dims = PAGE_DIMENSIONS[s.pageSize];
+    if (!dims) return;
+    const cols = 2;
+    const rows = Math.ceil(s.cardsPerPage / cols);
+    layouts[s.pageSize] = { ...dims, cols, rows, cardsPerPage: s.cardsPerPage };
+  });
+  return Object.keys(layouts).length > 0 ? layouts : DEFAULT_LAYOUTS;
+}
+
 export default function GenerateIDDialog({ open, onClose, students, school }) {
+  const { data: settingsResponse } = useGetActiveExportSettingsQuery();
+  const activeSettings = settingsResponse?.data || [];
+  const LAYOUTS = buildLayouts(activeSettings);
+
   const [paperSize, setPaperSize] = useState('A4');
   const [action, setAction] = useState('download');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Reset paper size if the current one isn't in the fetched layouts
+  React.useEffect(() => {
+    if (!LAYOUTS[paperSize]) {
+      const first = Object.keys(LAYOUTS)[0];
+      if (first) setPaperSize(first);
+    }
+  }, [LAYOUTS, paperSize]);
 
   const apiBase = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
 

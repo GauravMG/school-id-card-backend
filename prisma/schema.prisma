@@ -42,6 +42,11 @@ enum RefreshTokenStatus {
   EXPIRED
 }
 
+enum PageSize {
+  A3
+  A4
+}
+
 enum AuditAction {
   LOGIN
   LOGOUT
@@ -164,6 +169,17 @@ model FileAsset {
   studentPhotoFor       Student[] @relation("StudentPhoto")
   studentCompositeFor   Student[] @relation("StudentComposite")
   studentCardFor        Student[] @relation("StudentCard")
+}
+
+model ExportSetting {
+  id           String   @id @default(cuid())
+  pageSize     PageSize
+  cardsPerPage Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([pageSize])
 }
 
 model CardTemplate {

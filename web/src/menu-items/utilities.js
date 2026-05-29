@@ -1,11 +1,12 @@
 // assets
-import { IconSchool, IconUsers, IconSchoolBell } from '@tabler/icons-react';
+import { IconSchool, IconUsers, IconSchoolBell, IconSettings } from '@tabler/icons-react';
 
 // constant
 const icons = {
   IconSchool,
   IconUsers,
-  IconSchoolBell
+  IconSchoolBell,
+  IconSettings
 };
 
 // ==============================|| UTILITIES MENU ITEMS ||============================== //
@@ -25,20 +26,29 @@ const utilities = {
       roles: ['SUPERADMIN']
     },
     {
-      id: 'util-staff',
-      title: 'Staff',
+      id: 'util-export-settings',
+      title: 'Export Settings',
       type: 'item',
-      url: '/staff',
-      icon: icons.IconUsers,
+      url: '/export-settings',
+      icon: icons.IconSettings,
       breadcrumbs: false,
-      roles: ['SCHOOL_STAFF']
+      roles: ['SUPERADMIN']
     },
     {
       id: 'util-students',
       title: 'Students',
       type: 'item',
       url: '/students',
-      icon: icons.IconSchoolBell,
+      icon: icons.IconUsers,
+      breadcrumbs: false,
+      roles: ['SCHOOL_STAFF']
+    },
+    {
+      id: 'util-staff',
+      title: 'Staff',
+      type: 'item',
+      url: '/staff',
+      icon: icons.IconUsers,
       breadcrumbs: false,
       roles: ['SCHOOL_STAFF']
     }
