@@ -18,11 +18,18 @@ export const getExportSetting = async (id: string) => {
     return prisma.exportSetting.findUnique({ where: { id } });
 };
 
+export const getExportSettingForPageSize = async (pageSize: PageSize) => {
+    return prisma.exportSetting.findUnique({ where: { pageSize } });
+};
+
 export const createExportSetting = async (data: { pageSize: PageSize; cardsPerPage: number }) => {
     return prisma.exportSetting.create({ data });
 };
 
-export const updateExportSetting = async (id: string, data: { cardsPerPage?: number; isActive?: boolean }) => {
+export const updateExportSetting = async (
+    id: string,
+    data: { cardsPerPage?: number; isActive?: boolean; showCropMarks?: boolean }
+) => {
     return prisma.exportSetting.update({ where: { id }, data });
 };
 

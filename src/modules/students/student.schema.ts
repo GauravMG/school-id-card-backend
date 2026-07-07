@@ -16,11 +16,19 @@ export const studentBaseSchema = z.object({
     emergencyPhone: z.string().optional().nullable(),
     address: z.string().optional().nullable(),
     bloodGroup: z.string().optional().nullable(),
-    transportRoute: z.string().optional().nullable()
+    transportRoute: z.string().optional().nullable(),
+    stream: z.enum(['ARTS', 'COMMERCE', 'SCIENCE_MEDICAL', 'SCIENCE_NON_MEDICAL']).optional().nullable(),
+    commuteMode: z.enum(['SELF', 'WITH_PARENT', 'SCHOOL_TRANSPORT']).optional().nullable()
 });
 
+const requireStreamForSeniorClasses = (data: { classValue: string; stream?: string | null }) =>
+    !['11', '12'].includes(data.classValue) || !!data.stream;
+
 export const createStudentSchema = z.object({
-    body: studentBaseSchema,
+    body: studentBaseSchema.refine(requireStreamForSeniorClasses, {
+        message: 'Stream is required for class 11 and 12',
+        path: ['stream']
+    }),
     params: z.object({ schoolId: z.string() })
 });
 

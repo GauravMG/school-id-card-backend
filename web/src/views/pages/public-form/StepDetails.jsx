@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Grid, TextField, Button, Box, Divider, Typography, MenuItem, CircularProgress, InputAdornment, Card, CardContent, Stack } from '@mui/material';
 // import { useGetPublicStudentQuery } from 'store/api/publicApi';
 import {
   useGetPublicStudentQuery,
+  useGetPublicFormFieldsQuery,
   useSubmitStudentDetailsMutation
 } from 'store/api/publicApi';
 import toast from 'react-hot-toast';
@@ -28,6 +29,19 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
     }
   );
 
+  // Per-school field customization (item 7) — a school can hide, require, or
+  // relabel any non-core field. Core identity fields (firstName, rollNumber,
+  // gender, classValue, sectionValue) are always shown/required server-side.
+  const { data: fieldsResult } = useGetPublicFormFieldsQuery(slug, { skip: !slug });
+  const fieldConfig = useMemo(() => {
+    const map = {};
+    (fieldsResult?.data || []).forEach((f) => { map[f.fieldKey] = f; });
+    return map;
+  }, [fieldsResult]);
+  const isFieldVisible = (key) => fieldConfig[key]?.isVisible !== false;
+  const isFieldRequired = (key) => !!fieldConfig[key]?.isRequired;
+  const fieldLabel = (key, fallback) => fieldConfig[key]?.label || fallback;
+
   useEffect(() => {
     if (studentResult?.success && studentResult?.data) {
       const student = studentResult.data;
@@ -45,11 +59,20 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
         address: student.address || prev.address,
         bloodGroup: student.bloodGroup || prev.bloodGroup,
         transportRoute: student.transportRoute || prev.transportRoute,
+        stream: student.stream || prev.stream,
+        commuteMode: student.commuteMode || prev.commuteMode,
         // Preserve existing photo if any, but usually we capture a new one in this flow
       }));
       toast.success('Record found! Details have been pre-filled.');
     }
   }, [studentResult, setFormData]);
+
+  const isSeniorClass = ['11', '12'].includes(formData.classValue);
+
+  const OPTIONAL_FIELD_KEYS = [
+    'lastName', 'admissionNumber', 'dateOfBirth', 'bloodGroup', 'fatherName',
+    'motherName', 'guardianPhone', 'emergencyPhone', 'address', 'transportRoute', 'commuteMode'
+  ];
 
   const validate = () => {
     let tempErrors = {};
@@ -58,6 +81,13 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
     if (!formData.classValue) tempErrors.classValue = 'Class is required';
     if (!formData.sectionValue) tempErrors.sectionValue = 'Section is required';
     if (!formData.gender) tempErrors.gender = 'Gender is required';
+    if (isSeniorClass && isFieldVisible('stream') && !formData.stream) tempErrors.stream = 'Stream is required for Class 11 & 12';
+
+    OPTIONAL_FIELD_KEYS.forEach((key) => {
+      if (isFieldVisible(key) && isFieldRequired(key) && !formData[key]) {
+        tempErrors[key] = `${fieldLabel(key, key)} is required`;
+      }
+    });
 
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -84,7 +114,9 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
         emergencyPhone: formData.emergencyPhone,
         address: formData.address,
         bloodGroup: formData.bloodGroup,
-        transportRoute: formData.transportRoute
+        transportRoute: formData.transportRoute,
+        stream: formData.stream || null,
+        commuteMode: formData.commuteMode || null
       };
 
       // FIRST API TRIGGER
@@ -158,16 +190,20 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="admissionNumber"
-                label="Admission Number"
-                fullWidth
-                value={formData.admissionNumber}
-                onChange={handleChange}
-                placeholder="Enter Admission No."
-              />
-            </Grid>
+            {isFieldVisible('admissionNumber') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="admissionNumber"
+                  label={fieldLabel('admissionNumber', 'Admission Number') + (isFieldRequired('admissionNumber') ? ' *' : '')}
+                  fullWidth
+                  value={formData.admissionNumber}
+                  onChange={handleChange}
+                  error={!!errors.admissionNumber}
+                  helperText={errors.admissionNumber}
+                  placeholder="Enter Admission No."
+                />
+              </Grid>
+            )}
             <Grid item xs={12} sm={6}>
               <TextField
                 select
@@ -225,15 +261,19 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
                 helperText={errors.firstName}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="lastName"
-                label="Last Name"
-                fullWidth
-                value={formData.lastName}
-                onChange={handleChange}
-              />
-            </Grid>
+            {isFieldVisible('lastName') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="lastName"
+                  label={fieldLabel('lastName', 'Last Name') + (isFieldRequired('lastName') ? ' *' : '')}
+                  fullWidth
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  error={!!errors.lastName}
+                  helperText={errors.lastName}
+                />
+              </Grid>
+            )}
             <Grid item xs={12} sm={6}>
               <TextField
                 select
@@ -249,27 +289,54 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
                 <MenuItem value="OTHER">Other</MenuItem>
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="dateOfBirth"
-                label="Date of Birth"
-                fullWidth
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="bloodGroup"
-                label="Blood Group"
-                fullWidth
-                value={formData.bloodGroup}
-                onChange={handleChange}
-                placeholder="e.g. A+"
-              />
-            </Grid>
+            {isFieldVisible('dateOfBirth') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="dateOfBirth"
+                  label={fieldLabel('dateOfBirth', 'Date of Birth') + (isFieldRequired('dateOfBirth') ? ' *' : '')}
+                  fullWidth
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  error={!!errors.dateOfBirth}
+                  helperText={errors.dateOfBirth}
+                />
+              </Grid>
+            )}
+            {isFieldVisible('bloodGroup') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="bloodGroup"
+                  label={fieldLabel('bloodGroup', 'Blood Group') + (isFieldRequired('bloodGroup') ? ' *' : '')}
+                  fullWidth
+                  value={formData.bloodGroup}
+                  onChange={handleChange}
+                  error={!!errors.bloodGroup}
+                  helperText={errors.bloodGroup}
+                  placeholder="e.g. A+"
+                />
+              </Grid>
+            )}
+            {isSeniorClass && isFieldVisible('stream') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  name="stream"
+                  label="Stream *"
+                  fullWidth
+                  value={formData.stream}
+                  onChange={handleChange}
+                  error={!!errors.stream}
+                  helperText={errors.stream}
+                >
+                  <MenuItem value="ARTS">Arts</MenuItem>
+                  <MenuItem value="COMMERCE">Commerce</MenuItem>
+                  <MenuItem value="SCIENCE_MEDICAL">Science (Medical)</MenuItem>
+                  <MenuItem value="SCIENCE_NON_MEDICAL">Science (Non-Medical)</MenuItem>
+                </TextField>
+              </Grid>
+            )}
           </Grid>
         </Box>
 
@@ -281,64 +348,106 @@ export default function StepDetails({ formData, setFormData, handleChange, onNex
 
         <Box>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="fatherName"
-                label="Father's Name"
-                fullWidth
-                value={formData.fatherName}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="motherName"
-                label="Mother's Name"
-                fullWidth
-                value={formData.motherName}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="guardianPhone"
-                label="Guardian Phone"
-                fullWidth
-                value={formData.guardianPhone}
-                onChange={handleChange}
-                inputProps={{ maxLength: 10 }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="emergencyPhone"
-                label="Emergency Contact"
-                fullWidth
-                value={formData.emergencyPhone}
-                onChange={handleChange}
-                inputProps={{ maxLength: 10 }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                name="address"
-                label="Home Address"
-                fullWidth
-                multiline
-                minRows={2}
-                value={formData.address}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                name="transportRoute"
-                label="Transport Route / Bus No."
-                fullWidth
-                value={formData.transportRoute}
-                onChange={handleChange}
-              />
-            </Grid>
+            {isFieldVisible('fatherName') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="fatherName"
+                  label={fieldLabel('fatherName', "Father's Name") + (isFieldRequired('fatherName') ? ' *' : '')}
+                  fullWidth
+                  value={formData.fatherName}
+                  onChange={handleChange}
+                  error={!!errors.fatherName}
+                  helperText={errors.fatherName}
+                />
+              </Grid>
+            )}
+            {isFieldVisible('motherName') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="motherName"
+                  label={fieldLabel('motherName', "Mother's Name") + (isFieldRequired('motherName') ? ' *' : '')}
+                  fullWidth
+                  value={formData.motherName}
+                  onChange={handleChange}
+                  error={!!errors.motherName}
+                  helperText={errors.motherName}
+                />
+              </Grid>
+            )}
+            {isFieldVisible('guardianPhone') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="guardianPhone"
+                  label={fieldLabel('guardianPhone', 'Guardian Phone') + (isFieldRequired('guardianPhone') ? ' *' : '')}
+                  fullWidth
+                  value={formData.guardianPhone}
+                  onChange={handleChange}
+                  error={!!errors.guardianPhone}
+                  helperText={errors.guardianPhone}
+                  inputProps={{ maxLength: 10 }}
+                />
+              </Grid>
+            )}
+            {isFieldVisible('emergencyPhone') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="emergencyPhone"
+                  label={fieldLabel('emergencyPhone', 'Emergency Contact') + (isFieldRequired('emergencyPhone') ? ' *' : '')}
+                  fullWidth
+                  value={formData.emergencyPhone}
+                  onChange={handleChange}
+                  error={!!errors.emergencyPhone}
+                  helperText={errors.emergencyPhone}
+                  inputProps={{ maxLength: 10 }}
+                />
+              </Grid>
+            )}
+            {isFieldVisible('address') && (
+              <Grid item xs={12}>
+                <TextField
+                  name="address"
+                  label={fieldLabel('address', 'Home Address') + (isFieldRequired('address') ? ' *' : '')}
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  value={formData.address}
+                  onChange={handleChange}
+                  error={!!errors.address}
+                  helperText={errors.address}
+                />
+              </Grid>
+            )}
+            {isFieldVisible('transportRoute') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="transportRoute"
+                  label={fieldLabel('transportRoute', 'Transport Route / Bus No.') + (isFieldRequired('transportRoute') ? ' *' : '')}
+                  fullWidth
+                  value={formData.transportRoute}
+                  onChange={handleChange}
+                  error={!!errors.transportRoute}
+                  helperText={errors.transportRoute}
+                />
+              </Grid>
+            )}
+            {isFieldVisible('commuteMode') && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  name="commuteMode"
+                  label={fieldLabel('commuteMode', 'How does the student commute?') + (isFieldRequired('commuteMode') ? ' *' : '')}
+                  fullWidth
+                  value={formData.commuteMode}
+                  onChange={handleChange}
+                  error={!!errors.commuteMode}
+                  helperText={errors.commuteMode}
+                >
+                  <MenuItem value="SELF">Self (Cycle/Walk)</MenuItem>
+                  <MenuItem value="WITH_PARENT">With Parent</MenuItem>
+                  <MenuItem value="SCHOOL_TRANSPORT">School Transport</MenuItem>
+                </TextField>
+              </Grid>
+            )}
           </Grid>
         </Box>
       </Stack>

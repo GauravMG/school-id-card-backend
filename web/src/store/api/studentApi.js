@@ -52,11 +52,22 @@ export const studentApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: formData,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Student', id }],
+      invalidatesTags: (result, error, { id, schoolId }) => [
+        { type: 'Student', id },
+        { type: 'Student', id: `LIST_${schoolId}` }
+      ],
     }),
     importStudentsCsv: builder.mutation({
       query: ({ schoolId, formData }) => ({
         url: `/students/schools/${schoolId}/students/import-csv`,
+        method: 'POST',
+        body: formData,
+      }),
+      invalidatesTags: (result, error, { schoolId }) => [{ type: 'Student', id: `LIST_${schoolId}` }],
+    }),
+    importBulkPhotos: builder.mutation({
+      query: ({ schoolId, formData }) => ({
+        url: `/students/schools/${schoolId}/students/bulk-photos`,
         method: 'POST',
         body: formData,
       }),
@@ -72,4 +83,5 @@ export const {
   useDeleteStudentMutation,
   useUploadStudentPhotoMutation,
   useImportStudentsCsvMutation,
+  useImportBulkPhotosMutation,
 } = studentApi;

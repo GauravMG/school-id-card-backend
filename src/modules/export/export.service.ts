@@ -6,6 +6,11 @@ import { getTemplateRenderer } from '../../services/template-renderer';
 import { renderExportPageHtml } from '../../templates/print/export-page';
 import { renderCardsPdf } from '../../services/id-card-render.service';
 import { UploadCategory } from '@prisma/client';
+import { injectAutoFitText } from '../../utils/fit-text';
+import { inlineUploadImages } from '../../utils/inline-images';
+import { injectSchoolFonts } from '../../utils/inline-fonts';
+import { getExportSettingForPageSize } from '../export-settings/export-setting.service';
+import { getSchoolFontMap } from '../schools/school-font.service';
 
 export const exportSchoolStudentsPdf = async (schoolId: string, body: any) => {
     const school = await prisma.school.findUnique({
@@ -40,6 +45,7 @@ export const exportSchoolStudentsPdf = async (schoolId: string, body: any) => {
 
     const layout = getPdfLayout(body.pageSize);
     const renderCard = await getTemplateRenderer(school.selectedTemplateId);
+    const exportSetting = await getExportSettingForPageSize(body.pageSize);
 
     const cardsHtml = students.map((student) => {
         const uniformUrl =
@@ -49,7 +55,7 @@ export const exportSchoolStudentsPdf = async (schoolId: string, body: any) => {
                     ? school.uniformGirlFile?.publicUrl
                     : undefined;
 
-        return renderCard({
+        const cardHtml = renderCard({
             school,
             student: {
                 ...student,
@@ -58,9 +64,16 @@ export const exportSchoolStudentsPdf = async (schoolId: string, body: any) => {
             },
             uniformUrl: uniformUrl ?? ''
         });
+
+        // Each card's HTML references /uploads/... paths — inline them to base64 so
+        // Puppeteer's setContent() (no server origin) can actually render the photos.
+        return inlineUploadImages(cardHtml);
     });
 
-    const fullHtml = renderExportPageHtml(cardsHtml, layout.columns);
+    const fonts = await getSchoolFontMap(school.id);
+    let fullHtml = renderExportPageHtml(cardsHtml, layout.columns, exportSetting?.showCropMarks ?? false);
+    fullHtml = injectSchoolFonts(fullHtml, fonts);
+    fullHtml = injectAutoFitText(fullHtml);
     const pdf = await renderCardsPdf(fullHtml, body.pageSize);
 
     const fileAsset = await prisma.fileAsset.create({

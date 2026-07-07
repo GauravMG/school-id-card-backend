@@ -28,8 +28,8 @@ export const createExportSettingController = asyncHandler(async (req: Request, r
 
 export const updateExportSettingController = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { cardsPerPage, isActive } = req.body;
-    const setting = await updateExportSetting(id, { cardsPerPage, isActive });
+    const { cardsPerPage, isActive, showCropMarks } = req.body;
+    const setting = await updateExportSetting(id, { cardsPerPage, isActive, showCropMarks });
     res.json(apiResponse('Export setting updated', setting));
 });
 

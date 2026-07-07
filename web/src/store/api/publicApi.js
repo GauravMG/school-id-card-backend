@@ -11,6 +11,9 @@ export const publicApi = apiSlice.injectEndpoints({
         params: { rollNumber, classValue, sectionValue }
       }),
     }),
+    getPublicFormFields: builder.query({
+      query: (slug) => `/public/schools/${slug}/form-fields`,
+    }),
     submitStudentDetails: builder.mutation({
       query: ({ slug, studentData }) => ({
         url: `/public/schools/${slug}/student`,
@@ -31,6 +34,7 @@ export const publicApi = apiSlice.injectEndpoints({
 export const {
   useGetPublicSchoolQuery,
   useGetPublicStudentQuery,
+  useGetPublicFormFieldsQuery,
   useSubmitStudentDetailsMutation,
   useRemoveBackgroundMutation,
 } = publicApi;

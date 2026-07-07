@@ -1,0 +1,4 @@
+rollNumber,firstName,lastName,gender,classValue,sectionValue,photoFileName
+201,Dave,Miller,MALE,6,A,dave.png
+202,Eva,Jones,FEMALE,6,A,eva.png
+203,Frank,NoPhoto,MALE,6,A,frank.png

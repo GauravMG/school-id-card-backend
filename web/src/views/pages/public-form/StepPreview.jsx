@@ -33,8 +33,9 @@ export default function StepPreview({ formData, onBack, onSubmit }) {
       </Typography>
 
       <Typography variant="body2" color="textSecondary" align="center" sx={{ mb: 4 }}>
-        Please review your details. This is how your ID card will look.
-        Ensure your photo is clear and all spelling is correct.
+        Please review your details and photo below. Your official ID card is being generated in the
+        background and will be ready shortly after you submit — ensure your photo is clear and all
+        spelling is correct.
       </Typography>
 
       <Grid container spacing={4} justifyContent="center" direction="column" alignItems="center">
@@ -54,14 +55,16 @@ export default function StepPreview({ formData, onBack, onSubmit }) {
           </Box>
         </Grid>
 
-        <Grid item xs={12} sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <Box
-            component="img"
-            src={localStorage.getItem('final_card_url')}
-            alt="ID Card Preview"
-            sx={{ maxWidth: '100%', width: 400, borderRadius: 2, boxShadow: 4 }}
-          />
-        </Grid>
+        {formData.photo && (
+          <Grid item xs={12} sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <Box
+              component="img"
+              src={formData.photo}
+              alt="Your Photo"
+              sx={{ maxWidth: '100%', width: 250, borderRadius: 2, boxShadow: 4 }}
+            />
+          </Grid>
+        )}
       </Grid>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>

@@ -1,12 +1,13 @@
 // assets
-import { IconSchool, IconUsers, IconSchoolBell, IconSettings } from '@tabler/icons-react';
+import { IconSchool, IconUsers, IconSchoolBell, IconSettings, IconHistory } from '@tabler/icons-react';
 
 // constant
 const icons = {
   IconSchool,
   IconUsers,
   IconSchoolBell,
-  IconSettings
+  IconSettings,
+  IconHistory
 };
 
 // ==============================|| UTILITIES MENU ITEMS ||============================== //
@@ -31,6 +32,15 @@ const utilities = {
       type: 'item',
       url: '/export-settings',
       icon: icons.IconSettings,
+      breadcrumbs: false,
+      roles: ['SUPERADMIN']
+    },
+    {
+      id: 'util-activity-logs',
+      title: 'Activity Logs',
+      type: 'item',
+      url: '/activity-logs',
+      icon: icons.IconHistory,
       breadcrumbs: false,
       roles: ['SUPERADMIN']
     },

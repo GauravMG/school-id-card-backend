@@ -54,4 +54,27 @@ export const studentFields = [
   { name: 'address', label: "Address", type: 'text', required: false },
   { name: 'bloodGroup', label: "Blood Group", type: 'text', required: false },
   { name: 'transportRoute', label: "Transport Route", type: 'text', required: false },
+  {
+    name: 'stream',
+    label: 'Stream (Class 11 / 12)',
+    type: 'select',
+    required: false,
+    options: [
+      { value: 'ARTS', label: 'Arts' },
+      { value: 'COMMERCE', label: 'Commerce' },
+      { value: 'SCIENCE_MEDICAL', label: 'Science (Medical)' },
+      { value: 'SCIENCE_NON_MEDICAL', label: 'Science (Non-Medical)' }
+    ]
+  },
+  {
+    name: 'commuteMode',
+    label: 'Commute Mode',
+    type: 'select',
+    required: false,
+    options: [
+      { value: 'SELF', label: 'Self (Cycle/Walk)' },
+      { value: 'WITH_PARENT', label: 'With Parent' },
+      { value: 'SCHOOL_TRANSPORT', label: 'School Transport' }
+    ]
+  },
 ];

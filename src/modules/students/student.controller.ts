@@ -2,9 +2,10 @@ import { Request, Response } from 'express';
 import { AuditAction } from '@prisma/client';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { apiResponse } from '../../utils/ApiResponse';
-import { createStudent, listStudents, updateStudent, uploadStudentPhoto } from './student.service';
+import { createStudent, getStudentPhotoStatus, listStudents, updateStudent, uploadStudentPhoto } from './student.service';
 import { createAuditLog } from '../../services/audit-log.service';
 import { importStudentsFromCsv } from '../../services/csv-import.service';
+import { importBulkPhotos } from '../../services/bulk-photo-import.service';
 import { ApiError } from '../../utils/ApiError';
 
 export const createStudentController = asyncHandler(async (req: Request, res: Response) => {
@@ -70,6 +71,11 @@ export const uploadStudentPhotoController = asyncHandler(async (req: Request, re
     res.json(apiResponse('Student photo uploaded', student));
 });
 
+export const getStudentPhotoStatusController = asyncHandler(async (req: Request, res: Response) => {
+    const status = await getStudentPhotoStatus(req.params.schoolId, req.params.studentId);
+    res.json(apiResponse('Student photo status fetched', status));
+});
+
 export const importStudentsCsvController = asyncHandler(async (req: Request, res: Response) => {
     if (!req.file) throw new ApiError(400, 'CSV file is required');
 
@@ -86,4 +92,34 @@ export const importStudentsCsvController = asyncHandler(async (req: Request, res
     });
 
     res.json(apiResponse('Students imported', { count: students.length, students }));
+});
+
+export const bulkPhotoImportController = asyncHandler(async (req: Request, res: Response) => {
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const sheetFile = files?.sheet?.[0];
+    const photoFiles = files?.photos || [];
+
+    if (!sheetFile) throw new ApiError(400, 'Roster sheet (CSV or Excel) is required');
+    if (photoFiles.length === 0) throw new ApiError(400, 'At least one photo file is required');
+
+    const result = await importBulkPhotos(req.params.schoolId, sheetFile.path, photoFiles);
+
+    await createAuditLog({
+        actorUserId: req.user?.userId,
+        schoolId: req.params.schoolId,
+        action: AuditAction.CSV_IMPORT,
+        entityType: 'STUDENT',
+        metadata: {
+            source: 'bulk-photo-import',
+            sheet: sheetFile.originalname,
+            photosUploaded: photoFiles.length,
+            matched: result.matched.length,
+            unmatchedPhoto: result.unmatchedPhoto.length,
+            invalidRows: result.invalidRows.length
+        },
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+    });
+
+    res.json(apiResponse('Bulk photo import processed', result));
 });
