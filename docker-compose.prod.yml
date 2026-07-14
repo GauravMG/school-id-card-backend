@@ -1,0 +1,65 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: runner
+    container_name: school-id-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: sh -c "npx prisma db push && node dist/index.js"
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - api_uploads:/app/uploads
+      - imgly_model_cache:/root/.cache
+    networks:
+      - school-id-network
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.prod
+      target: runner
+    container_name: school-id-web
+    restart: unless-stopped
+    env_file:
+      - ./web/.env
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+    networks:
+      - school-id-network
+
+  postgres:
+    image: postgres:16
+    container_name: school-id-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: school_id_cards
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - school-id-network
+
+networks:
+  school-id-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  api_uploads:
+  imgly_model_cache:
