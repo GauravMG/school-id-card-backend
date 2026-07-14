@@ -2,7 +2,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
       target: runner
     container_name: school-id-api
     restart: unless-stopped
@@ -23,7 +23,7 @@ services:
   web:
     build:
       context: ./web
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
       target: runner
     container_name: school-id-web
     restart: unless-stopped
