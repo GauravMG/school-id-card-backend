@@ -20,6 +20,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LoginIcon from '@mui/icons-material/Login';
 import ManIcon from '@mui/icons-material/Man';
 import WomanIcon from '@mui/icons-material/Woman';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { Box } from '@mui/material';
 import UserRoundIcon from 'assets/images/users/user-round.svg';
 
@@ -30,6 +33,9 @@ export default function GenericTable({
   onDelete,
   onUpload,
   onLoginAs,
+  onAdjustPhoto,
+  onFonts,
+  onFormFields,
   emptyMessage = "No records found.",
   page = 0,
   rowsPerPage = 20,
@@ -204,6 +210,27 @@ export default function GenericTable({
                           </IconButton>
                         </Tooltip>
                       )} */}
+                      {onAdjustPhoto && (
+                        <Tooltip title="Adjust Photo">
+                          <IconButton color="secondary" onClick={() => onAdjustPhoto(row)}>
+                            <PhotoCameraIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {onFonts && (
+                        <Tooltip title="ID Card Fonts">
+                          <IconButton color="secondary" onClick={() => onFonts(row)}>
+                            <TextFieldsIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {onFormFields && (
+                        <Tooltip title="Form Fields">
+                          <IconButton color="secondary" onClick={() => onFormFields(row)}>
+                            <FormatListBulletedIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       {onDelete && (
                         <IconButton color="error" onClick={() => onDelete(row.id)}>
                           <DeleteIcon />

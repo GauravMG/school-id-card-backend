@@ -12,6 +12,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import TemplateSelectionDialog from 'components/TemplateSelectionDialog';
 import UniformSelectionDialog from 'components/UniformSelectionDialog';
+import ImageAdjustDialog from 'components/ImageAdjustDialog';
 
 export default function GenericFormDialog({ open, onClose, onSave, title, fields, initialData }) {
   const [formData, setFormData] = useState({});
@@ -19,6 +20,8 @@ export default function GenericFormDialog({ open, onClose, onSave, title, fields
   const [errors, setErrors] = useState({});
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [uniformDialogOpen, setUniformDialogOpen] = useState(false);
+  const [adjustField, setAdjustField] = useState(null);
+  const [adjustSource, setAdjustSource] = useState(null);
 
   useEffect(() => {
     if (open) {
@@ -147,10 +150,25 @@ export default function GenericFormDialog({ open, onClose, onSave, title, fields
                           hidden
                           onChange={(e) => {
                             const file = e.target.files[0];
-                            if (file) setFileData(prev => ({ ...prev, [field.name]: file }));
+                            if (file) {
+                              setAdjustField(field.name);
+                              setAdjustSource(file);
+                            }
+                            e.target.value = '';
                           }}
                         />
                       </Button>
+                      {currentFile && (
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            setAdjustField(field.name);
+                            setAdjustSource(currentFile);
+                          }}
+                        >
+                          Adjust
+                        </Button>
+                      )}
                       {currentFile && (
                         <Button
                           size="small"
@@ -238,9 +256,9 @@ export default function GenericFormDialog({ open, onClose, onSave, title, fields
         />
       )}
       {fields.find(f => f.type === 'uniform-picker') && (
-        <UniformSelectionDialog 
-          open={uniformDialogOpen} 
-          onClose={() => setUniformDialogOpen(false)} 
+        <UniformSelectionDialog
+          open={uniformDialogOpen}
+          onClose={() => setUniformDialogOpen(false)}
           selectedValue={formData[fields.find(f => f.type === 'uniform-picker').name]}
           onSelect={(val) => {
             handleChange({ target: { name: fields.find(f => f.type === 'uniform-picker').name, value: val } });
@@ -248,6 +266,17 @@ export default function GenericFormDialog({ open, onClose, onSave, title, fields
           }}
         />
       )}
+
+      <ImageAdjustDialog
+        open={!!adjustField}
+        onClose={() => { setAdjustField(null); setAdjustSource(null); }}
+        imageSrc={adjustSource}
+        title="Adjust Uniform Image"
+        onSave={(blob) => {
+          const file = new File([blob], `${adjustField}.png`, { type: 'image/png' });
+          setFileData(prev => ({ ...prev, [adjustField]: file }));
+        }}
+      />
     </Dialog>
   );
 }

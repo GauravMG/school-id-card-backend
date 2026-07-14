@@ -17,6 +17,8 @@ import MainCard from 'ui-component/cards/MainCard';
 import GenericTable from './GenericTable';
 import GenericFormDialog from './GenericFormDialog';
 import SchoolAssetsDialog from './SchoolAssetsDialog';
+import SchoolFontsDialog from './SchoolFontsDialog';
+import SchoolFormFieldsDialog from './SchoolFormFieldsDialog';
 import toast from 'react-hot-toast';
 
 // ==============================|| TYPOGRAPHY (SCHOOL MANAGEMENT) ||============================== //
@@ -58,6 +60,8 @@ export default function Schools() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
+  const [fontsDialogOpen, setFontsDialogOpen] = useState(false);
+  const [formFieldsDialogOpen, setFormFieldsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [currentSchool, setCurrentSchool] = useState(null);
 
@@ -191,6 +195,16 @@ export default function Schools() {
     setAssetDialogOpen(true);
   };
 
+  const handleFontsClick = (school) => {
+    setCurrentSchool(school);
+    setFontsDialogOpen(true);
+  };
+
+  const handleFormFieldsClick = (school) => {
+    setCurrentSchool(school);
+    setFormFieldsDialogOpen(true);
+  };
+
   const handleDelete = async (id) => {
     try {
       const result = await deleteSchool(id).unwrap();
@@ -253,11 +267,13 @@ export default function Schools() {
             <CircularProgress />
           </Box>
         ) : (
-          <GenericTable 
-            data={schools.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)} 
-            columns={schoolColumns} 
-            onEdit={handleEdit} 
-            onUpload={handleUploadClick} 
+          <GenericTable
+            data={schools.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
+            columns={schoolColumns}
+            onEdit={handleEdit}
+            onUpload={handleUploadClick}
+            onFonts={handleFontsClick}
+            onFormFields={handleFormFieldsClick}
             onLoginAs={handleLoginAs}
             emptyMessage="No schools added yet. Click 'Add School' to get started."
             page={page}
@@ -281,10 +297,23 @@ export default function Schools() {
           initialData={currentSchool} 
         />
 
-        <SchoolAssetsDialog 
-          open={assetDialogOpen} 
-          onClose={() => setAssetDialogOpen(false)} 
-          school={currentSchool} 
+        <SchoolAssetsDialog
+          open={assetDialogOpen}
+          onClose={() => setAssetDialogOpen(false)}
+          school={currentSchool}
+        />
+
+        <SchoolFontsDialog
+          open={fontsDialogOpen}
+          onClose={() => setFontsDialogOpen(false)}
+          school={currentSchool}
+        />
+
+        <SchoolFormFieldsDialog
+          open={formFieldsDialogOpen}
+          onClose={() => setFormFieldsDialogOpen(false)}
+          schoolId={currentSchool?.id}
+          schoolName={currentSchool?.name}
         />
       </Stack>
     </MainCard>

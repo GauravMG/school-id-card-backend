@@ -40,6 +40,8 @@ export default function StudentIdForm() {
     address: '',
     bloodGroup: '',
     transportRoute: '',
+    stream: '',
+    commuteMode: '',
     photo: null
   });
 

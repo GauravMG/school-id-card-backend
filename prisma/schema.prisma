@@ -25,6 +25,26 @@ enum StudentStatus {
   COMPLETED
 }
 
+enum StudentStream {
+  ARTS
+  COMMERCE
+  SCIENCE_MEDICAL
+  SCIENCE_NON_MEDICAL
+}
+
+enum CommuteMode {
+  SELF
+  WITH_PARENT
+  SCHOOL_TRANSPORT
+}
+
+enum FontSlot {
+  HEADER
+  NAME
+  LABEL
+  BODY
+}
+
 enum UploadCategory {
   SCHOOL_LOGO
   SCHOOL_UNIFORM_BOY
@@ -106,10 +126,39 @@ model School {
   users            User[]
   students         Student[]
   auditLogs        AuditLog[]     @relation("AuditSchool")
+  fontSettings     SchoolFontSetting[]
+  formFields       SchoolFormField[]
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
   @@index([publicSlug])
+}
+
+model SchoolFontSetting {
+  id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  slot        FontSlot
+  fontFamily  String   @default("system")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([schoolId, slot])
+}
+
+model SchoolFormField {
+  id          String   @id @default(cuid())
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  fieldKey    String
+  label       String
+  isVisible   Boolean  @default(true)
+  isRequired  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([schoolId, fieldKey])
 }
 
 model Student {
@@ -133,6 +182,8 @@ model Student {
   address               String?
   bloodGroup            String?
   transportRoute        String?
+  stream                StudentStream?
+  commuteMode           CommuteMode?
   photoFileId           String?
   compositeFileId       String?
   generatedCardFileId   String?
@@ -143,6 +194,7 @@ model Student {
   status                StudentStatus @default(DRAFT)
   isImported            Boolean       @default(false)
   submittedFromPublic   Boolean       @default(false)
+  processingJobs        ProcessingJob[]
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
@@ -150,6 +202,33 @@ model Student {
   @@index([schoolId, classValue, sectionValue])
   @@index([schoolId, status])
   @@index([schoolId, isDetailsCompleted])
+}
+
+enum ProcessingJobType {
+  STUDENT_PHOTO_COMPOSITE
+}
+
+enum ProcessingJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model ProcessingJob {
+  id           String              @id @default(cuid())
+  type         ProcessingJobType
+  studentId    String
+  student      Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  photoAssetId String
+  status       ProcessingJobStatus @default(PENDING)
+  attempts     Int                 @default(0)
+  error        String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([status])
+  @@index([studentId])
 }
 
 model FileAsset {
@@ -172,12 +251,13 @@ model FileAsset {
 }
 
 model ExportSetting {
-  id           String   @id @default(cuid())
-  pageSize     PageSize
-  cardsPerPage Int
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  pageSize       PageSize
+  cardsPerPage   Int
+  isActive       Boolean  @default(true)
+  showCropMarks  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([pageSize])
 }

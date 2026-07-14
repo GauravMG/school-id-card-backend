@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { CARD_LOGICAL_WIDTH_PX, CARD_LOGICAL_HEIGHT_PX, CARD_DEVICE_SCALE_FACTOR } from '../config/constants';
 
 // Required on Linux servers to avoid sandbox privilege errors
 const BROWSER_ARGS = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'];
@@ -8,6 +9,7 @@ export const generatePdfFromHtml = async (html: string, format: 'A3' | 'A4' | 'A
     try {
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('html[data-fit-done="1"]', { timeout: 2000 }).catch(() => {});
         await page.pdf({
             path: outputPath,
             format,
@@ -20,9 +22,10 @@ export const generatePdfFromHtml = async (html: string, format: 'A3' | 'A4' | 'A
 };
 
 /**
- * Takes a PNG screenshot of a single ID card (323 × 204 px logical size) at 2×
- * device pixel ratio, yielding a 646 × 408 px output file suitable for display
- * and further PDF embedding.
+ * Takes a PNG screenshot of a single ID card (323 × 204 px logical size) at a
+ * device pixel ratio tuned to CARD_DEVICE_SCALE_FACTOR (~300 DPI at the
+ * standard CR80 card width), yielding a print-quality output file suitable
+ * for display, individual download, and Epson inkjet printing.
  *
  * All images in the HTML must be base64 data URIs — Puppeteer's setContent() has
  * no server origin so /uploads/... src paths would 404.
@@ -31,9 +34,13 @@ export const screenshotCardHtml = async (html: string, outputPath: string): Prom
     const browser = await puppeteer.launch({ headless: true, args: BROWSER_ARGS });
     try {
         const page = await browser.newPage();
-        // 2× DPR gives a crisp 646×408 px PNG from a 323×204 logical card
-        await page.setViewport({ width: 323, height: 204, deviceScaleFactor: 2 });
+        await page.setViewport({
+            width: CARD_LOGICAL_WIDTH_PX,
+            height: CARD_LOGICAL_HEIGHT_PX,
+            deviceScaleFactor: CARD_DEVICE_SCALE_FACTOR
+        });
         await page.setContent(html, { waitUntil: 'networkidle0' });
+        await page.waitForSelector('html[data-fit-done="1"]', { timeout: 2000 }).catch(() => {});
         await page.screenshot({ path: outputPath, type: 'png', fullPage: false });
     } finally {
         await browser.close();

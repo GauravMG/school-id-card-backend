@@ -16,6 +16,7 @@ const Schools = Loadable(lazy(() => import('views/utilities/Schools')));
 const Students = Loadable(lazy(() => import('views/utilities/Students')));
 const Staff = Loadable(lazy(() => import('views/utilities/Staff')));
 const ExportSettings = Loadable(lazy(() => import('views/utilities/ExportSettings')));
+const ActivityLogs = Loadable(lazy(() => import('views/utilities/ActivityLogs')));
 // const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
 
 // sample page routing
@@ -58,6 +59,14 @@ const MainRoutes = {
       element: (
         <RoleGuard allowedRoles={['SUPERADMIN']}>
           <ExportSettings />
+        </RoleGuard>
+      )
+    },
+    {
+      path: 'activity-logs',
+      element: (
+        <RoleGuard allowedRoles={['SUPERADMIN']}>
+          <ActivityLogs />
         </RoleGuard>
       )
     }

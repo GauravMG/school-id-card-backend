@@ -27,12 +27,16 @@ const storage = multer.diskStorage({
 });
 
 const imageMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-const csvMimeTypes = ['text/csv', 'application/vnd.ms-excel'];
+const sheetMimeTypes = [
+    'text/csv',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+];
 
 export const upload = multer({
     storage,
     fileFilter: (_req, file, cb) => {
-        if (imageMimeTypes.includes(file.mimetype) || csvMimeTypes.includes(file.mimetype)) {
+        if (imageMimeTypes.includes(file.mimetype) || sheetMimeTypes.includes(file.mimetype)) {
             cb(null, true);
             return;
         }
@@ -40,5 +44,23 @@ export const upload = multer({
     },
     limits: {
         fileSize: 8 * 1024 * 1024
+    }
+});
+
+// Bulk photo import (item 12): one roster sheet + potentially hundreds of
+// student photos in a single request, so this needs a higher file count than
+// the default `upload` instance's typical single/few-file usage elsewhere.
+export const uploadBulkPhotos = multer({
+    storage,
+    fileFilter: (_req, file, cb) => {
+        if (imageMimeTypes.includes(file.mimetype) || sheetMimeTypes.includes(file.mimetype)) {
+            cb(null, true);
+            return;
+        }
+        cb(new Error('Unsupported file type'));
+    },
+    limits: {
+        fileSize: 8 * 1024 * 1024,
+        files: 500
     }
 });

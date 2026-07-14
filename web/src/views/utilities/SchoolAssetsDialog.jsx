@@ -12,16 +12,26 @@ import {
 } from '@mui/material';
 import { useUploadSchoolAssetsMutation } from 'store/api/schoolApi';
 import toast from 'react-hot-toast';
+import ImageAdjustDialog from 'components/ImageAdjustDialog';
 
 export default function SchoolAssetsDialog({ open, onClose, school }) {
   const [logo, setLogo] = useState(null);
   const [uniformBoy, setUniformBoy] = useState(null);
   const [uniformGirl, setUniformGirl] = useState(null);
-  
+  const [adjustTarget, setAdjustTarget] = useState(null); // 'logo' | 'uniformBoy' | 'uniformGirl'
+  const [adjustSource, setAdjustSource] = useState(null);
+
   const [uploadAssets, { isLoading }] = useUploadSchoolAssetsMutation();
 
-  const handleFileChange = (e, setter) => {
-    setter(e.target.files[0]);
+  const SETTERS = { logo: setLogo, uniformBoy: setUniformBoy, uniformGirl: setUniformGirl };
+
+  const handleFileChange = (e, target) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAdjustTarget(target);
+      setAdjustSource(file);
+    }
+    e.target.value = '';
   };
 
   const handleUpload = async () => {
@@ -51,18 +61,18 @@ export default function SchoolAssetsDialog({ open, onClose, school }) {
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <Box>
-            <Typography variant="subtitle2" gutterBottom>School Logo</Typography>
-            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, setLogo)} />
+            <Typography variant="subtitle2" gutterBottom>School Logo{logo ? ' ✓' : ''}</Typography>
+            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
           </Box>
-          
+
           <Box>
-            <Typography variant="subtitle2" gutterBottom>Uniform Overlay (Boy)</Typography>
-            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, setUniformBoy)} />
+            <Typography variant="subtitle2" gutterBottom>Uniform Overlay (Boy){uniformBoy ? ' ✓' : ''}</Typography>
+            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'uniformBoy')} />
           </Box>
-          
+
           <Box>
-            <Typography variant="subtitle2" gutterBottom>Uniform Overlay (Girl)</Typography>
-            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, setUniformGirl)} />
+            <Typography variant="subtitle2" gutterBottom>Uniform Overlay (Girl){uniformGirl ? ' ✓' : ''}</Typography>
+            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'uniformGirl')} />
           </Box>
 
           {isLoading && <LinearProgress />}
@@ -74,6 +84,17 @@ export default function SchoolAssetsDialog({ open, onClose, school }) {
           {isLoading ? 'Uploading...' : 'Upload All'}
         </Button>
       </DialogActions>
+
+      <ImageAdjustDialog
+        open={!!adjustTarget}
+        onClose={() => { setAdjustTarget(null); setAdjustSource(null); }}
+        imageSrc={adjustSource}
+        title={`Adjust ${adjustTarget === 'logo' ? 'Logo' : adjustTarget === 'uniformBoy' ? 'Boy Uniform' : 'Girl Uniform'}`}
+        onSave={(blob) => {
+          const file = new File([blob], `${adjustTarget}.png`, { type: 'image/png' });
+          SETTERS[adjustTarget](file);
+        }}
+      />
     </Dialog>
   );
 }

@@ -3,11 +3,12 @@ import path from 'path';
 import sharp from 'sharp';
 import OpenAI, { toFile } from 'openai';
 import { ensureDir } from '../utils/file';
+import { PHOTO_CANVAS_WIDTH, PHOTO_CANVAS_HEIGHT } from '../config/constants';
 
 ensureDir('uploads/rendered');
 
-const CANVAS_W = 600;
-const CANVAS_H = 800;
+const CANVAS_W = PHOTO_CANVAS_WIDTH;
+const CANVAS_H = PHOTO_CANVAS_HEIGHT;
 
 export type CompositeInput = {
     studentPhotoPath: string;

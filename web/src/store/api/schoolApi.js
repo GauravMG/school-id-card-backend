@@ -52,6 +52,30 @@ export const schoolApi = apiSlice.injectEndpoints({
     getTemplates: builder.query({
       query: () => '/templates',
     }),
+    getSchoolFonts: builder.query({
+      query: (schoolId) => `/schools/${schoolId}/fonts`,
+      providesTags: (result, error, schoolId) => [{ type: 'SchoolFonts', id: schoolId }],
+    }),
+    updateSchoolFonts: builder.mutation({
+      query: ({ schoolId, ...fonts }) => ({
+        url: `/schools/${schoolId}/fonts`,
+        method: 'PUT',
+        body: fonts,
+      }),
+      invalidatesTags: (result, error, { schoolId }) => [{ type: 'SchoolFonts', id: schoolId }],
+    }),
+    getSchoolFormFields: builder.query({
+      query: (schoolId) => `/schools/${schoolId}/form-fields`,
+      providesTags: (result, error, schoolId) => [{ type: 'SchoolFormFields', id: schoolId }],
+    }),
+    updateSchoolFormFields: builder.mutation({
+      query: ({ schoolId, fields }) => ({
+        url: `/schools/${schoolId}/form-fields`,
+        method: 'PUT',
+        body: { fields },
+      }),
+      invalidatesTags: (result, error, { schoolId }) => [{ type: 'SchoolFormFields', id: schoolId }],
+    }),
   }),
 });
 
@@ -63,4 +87,8 @@ export const {
   useDeleteSchoolMutation,
   useUploadSchoolAssetsMutation,
   useGetTemplatesQuery,
+  useGetSchoolFontsQuery,
+  useUpdateSchoolFontsMutation,
+  useGetSchoolFormFieldsQuery,
+  useUpdateSchoolFormFieldsMutation,
 } = schoolApi;

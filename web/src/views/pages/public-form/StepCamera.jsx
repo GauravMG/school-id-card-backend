@@ -114,9 +114,15 @@ export default function StepCamera({ photo, onCapture, onNext, onBack, uniformBo
     });
   };
 
+  // The AI composite + ID card render now runs as a background job on the
+  // server (see job-queue.service.ts) instead of blocking this request, so we
+  // only need to confirm the upload succeeded — not wait for the final card.
+  // The locally-adjusted photo (already set as `capturedImage` by the caller)
+  // is used as the preview on the next step; the official card finishes
+  // generating on the backend shortly after this request returns.
   const uploadFinalImage = async (dataUrl) => {
     if (!studentId || !schoolId) return;
-    
+
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     const uploadFormData = new FormData();
@@ -128,53 +134,8 @@ export default function StepCamera({ photo, onCapture, onNext, onBack, uniformBo
     });
 
     if (!uploadResponse.ok) throw new Error('Photo upload failed');
-    const uploadResult = await uploadResponse.json();
 
-    const apiBase = new URL(import.meta.env.VITE_API_BASE_URL).origin;
-
-    const cardPath = uploadResult?.data?.generatedCardFile?.publicUrl;
-    if (cardPath) {
-      try {
-        const cardRes = await fetch(`${apiBase}${cardPath}?t=${Date.now()}`);
-        if (cardRes.ok) {
-          const cardBlob = await cardRes.blob();
-          localStorage.setItem('final_card_url', URL.createObjectURL(cardBlob));
-        } else {
-          localStorage.setItem('final_card_url', `${apiBase}${cardPath}`);
-        }
-      } catch {
-        localStorage.setItem('final_card_url', `${apiBase}${cardPath}`);
-      }
-    } else {
-      localStorage.setItem('final_card_url', '');
-    }
-
-    const compositePath = uploadResult?.data?.compositeFile?.publicUrl;
-    const photoPath = uploadResult?.data?.photoFile?.publicUrl;
-
-    const compositeImage = compositePath ? `${apiBase}${compositePath}` : null;
-    const photoImage = photoPath ? `${apiBase}${photoPath}` : null;
-    const finalImage = compositeImage || photoImage;
-
-    if (finalImage) {
-      localStorage.removeItem('final_student_photo');
-      const cacheBustedUrl = `${finalImage}?t=${Date.now()}`;
-      try {
-        const fetchRes = await fetch(cacheBustedUrl);
-        if (!fetchRes.ok) throw new Error('HTTP error');
-        const finalBlob = await fetchRes.blob();
-        const objectUrl = URL.createObjectURL(finalBlob);
-        localStorage.setItem('final_student_photo', objectUrl);
-        setCapturedImage(objectUrl);
-        onCapture(objectUrl);
-        toast.success('Photo adjusted and uploaded successfully!');
-      } catch (error) {
-        const fallbackImage = photoImage || dataUrl;
-        setCapturedImage(fallbackImage);
-        onCapture(fallbackImage);
-        toast.error('Composite image failed to load, showing local preview');
-      }
-    }
+    toast.success('Photo uploaded successfully!');
   };
 
   const handleCapture = async () => {
@@ -497,16 +458,8 @@ export default function StepCamera({ photo, onCapture, onNext, onBack, uniformBo
                 }}
               >
 
-                {/* <img
-                  src={capturedImage}
-                  alt="Captured"
-                  style={{ width: '100%', height: '100%', background: '#fff' }}
-                /> */}
                   <img
-                    src={
-                      localStorage.getItem('final_student_photo') ||
-                      capturedImage
-                    }
+                    src={capturedImage}
                     alt="Captured"
                     style={{
                       width: '100%',

@@ -22,14 +22,23 @@ import GenericTable from './GenericTable';
 import GenericFormDialog from './GenericFormDialog';
 import GenerateIDDialog from './GenerateIDDialog';
 import ImportCsvDialog from './ImportCsvDialog';
+import SchoolFormFieldsDialog from './SchoolFormFieldsDialog';
+import BulkPhotoImportDialog from './BulkPhotoImportDialog';
 import toast from 'react-hot-toast';
+import ImageAdjustDialog from 'components/ImageAdjustDialog';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import { useGetSchoolsQuery, useGetSchoolQuery } from 'store/api/schoolApi';
 import {
   useGetStudentsQuery,
   useCreateStudentMutation,
   useUpdateStudentMutation,
-  useDeleteStudentMutation
+  useDeleteStudentMutation,
+  useUploadStudentPhotoMutation
 } from 'store/api/studentApi';
+
+// Matches the backend's standard printed photo size (PHOTO_WIDTH_IN / PHOTO_HEIGHT_IN, src/config/constants.ts)
+const PHOTO_ASPECT = 1.2 / 1.3;
 
 // ==============================|| TYPOGRAPHY (STUDENTS MANAGEMENT) ||============================== //
 
@@ -62,6 +71,8 @@ export default function Students() {
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [formFieldsDialogOpen, setFormFieldsDialogOpen] = useState(false);
+  const [bulkPhotoDialogOpen, setBulkPhotoDialogOpen] = useState(false);
 
   const SHOW_IMPORT_CSV = true;
   const SHOW_ADD_STUDENT = false;
@@ -106,10 +117,42 @@ export default function Students() {
   const [createStudent] = useCreateStudentMutation();
   const [updateStudent] = useUpdateStudentMutation();
   const [deleteStudent] = useDeleteStudentMutation();
+  const [uploadStudentPhoto] = useUploadStudentPhotoMutation();
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [currentStudent, setCurrentStudent] = useState(null);
+
+  const photoInputRef = React.useRef(null);
+  const [adjustStudent, setAdjustStudent] = useState(null);
+  const [adjustSource, setAdjustSource] = useState(null);
+
+  const handleAdjustPhotoClick = (student) => {
+    setAdjustStudent(student);
+    photoInputRef.current?.click();
+  };
+
+  const handlePhotoFileSelected = (e) => {
+    const file = e.target.files[0];
+    if (file) setAdjustSource(file);
+    e.target.value = '';
+  };
+
+  const handlePhotoAdjustSave = async (blob) => {
+    if (!adjustStudent) return;
+    try {
+      const formData = new FormData();
+      formData.append('photo', blob, `${adjustStudent.id}.png`);
+      await uploadStudentPhoto({ schoolId: selectedSchoolId, id: adjustStudent.id, formData }).unwrap();
+      toast.success('Photo uploaded — the ID card is regenerating in the background.');
+    } catch (err) {
+      console.error('Failed to upload adjusted photo', err);
+      toast.error(err?.data?.message || 'Failed to upload photo');
+    } finally {
+      setAdjustStudent(null);
+      setAdjustSource(null);
+    }
+  };
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -235,6 +278,22 @@ export default function Students() {
                 Import CSV
               </Button>
             )}
+            <Button
+              variant="outlined"
+              startIcon={<FormatListBulletedIcon />}
+              onClick={() => setFormFieldsDialogOpen(true)}
+              disabled={!selectedSchoolId}
+            >
+              Form Fields
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<PhotoLibraryIcon />}
+              onClick={() => setBulkPhotoDialogOpen(true)}
+              disabled={!selectedSchoolId}
+            >
+              Bulk Photo Import
+            </Button>
             {SHOW_ADD_STUDENT && (
               <Button
                 variant="contained"
@@ -307,6 +366,7 @@ export default function Students() {
             columns={studentColumns}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onAdjustPhoto={handleAdjustPhotoClick}
             hideEdit={!SHOW_EDIT_STUDENT}
             emptyMessage="No students found in this category."
             page={page}
@@ -348,6 +408,36 @@ export default function Students() {
           open={importDialogOpen}
           onClose={() => setImportDialogOpen(false)}
           schoolId={selectedSchoolId}
+        />
+
+        <SchoolFormFieldsDialog
+          open={formFieldsDialogOpen}
+          onClose={() => setFormFieldsDialogOpen(false)}
+          schoolId={selectedSchoolId}
+          schoolName={schoolDetails?.name}
+        />
+
+        <BulkPhotoImportDialog
+          open={bulkPhotoDialogOpen}
+          onClose={() => setBulkPhotoDialogOpen(false)}
+          schoolId={selectedSchoolId}
+        />
+
+        {/* Hidden file input backing the "Adjust Photo" row action */}
+        <input
+          type="file"
+          accept="image/*"
+          ref={photoInputRef}
+          hidden
+          onChange={handlePhotoFileSelected}
+        />
+        <ImageAdjustDialog
+          open={!!adjustSource}
+          onClose={() => { setAdjustSource(null); setAdjustStudent(null); }}
+          imageSrc={adjustSource}
+          aspect={PHOTO_ASPECT}
+          title={adjustStudent ? `Adjust Photo — ${adjustStudent.fullName}` : 'Adjust Photo'}
+          onSave={handlePhotoAdjustSave}
         />
       </Stack>
     </MainCard>

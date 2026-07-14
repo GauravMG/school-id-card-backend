@@ -15,6 +15,8 @@ type CsvStudentRow = {
     guardianPhone?: string;
     admissionNumber?: string;
     address?: string;
+    stream?: 'ARTS' | 'COMMERCE' | 'SCIENCE_MEDICAL' | 'SCIENCE_NON_MEDICAL';
+    commuteMode?: 'SELF' | 'WITH_PARENT' | 'SCHOOL_TRANSPORT';
 };
 
 export const importStudentsFromCsv = async (schoolId: string, csvPath: string) => {
@@ -47,6 +49,8 @@ export const importStudentsFromCsv = async (schoolId: string, csvPath: string) =
                 guardianPhone: row.guardianPhone || null,
                 admissionNumber: row.admissionNumber || null,
                 address: row.address || null,
+                stream: row.stream || null,
+                commuteMode: row.commuteMode || null,
                 isImported: true,
                 status: StudentStatus.PHOTO_PENDING,
                 isDetailsCompleted: false
@@ -62,7 +66,9 @@ export const importStudentsFromCsv = async (schoolId: string, csvPath: string) =
                 motherName: row.motherName || null,
                 guardianPhone: row.guardianPhone || null,
                 admissionNumber: row.admissionNumber || null,
-                address: row.address || null
+                address: row.address || null,
+                stream: row.stream || null,
+                commuteMode: row.commuteMode || null
             }
         });
 
