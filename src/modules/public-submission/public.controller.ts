@@ -7,23 +7,23 @@ import { createAuditLog } from '../../services/audit-log.service';
 import { getSchoolFormFields } from '../schools/school-form-field.service';
 
 export const getPublicSchoolController = asyncHandler(async (req: Request, res: Response) => {
-    const school = await getPublicSchoolBySlug(req.params.slug);
+    const school = await getPublicSchoolBySlug(req.params.slug as string);
     res.json(apiResponse('Public school fetched', school));
 });
 
 export const getPublicFormFieldsController = asyncHandler(async (req: Request, res: Response) => {
-    const school = await getPublicSchoolBySlug(req.params.slug);
+    const school = await getPublicSchoolBySlug(req.params.slug as string);
     const fields = await getSchoolFormFields(school.id);
     res.json(apiResponse('Public form fields fetched', fields));
 });
 
 export const getStudentByRollController = asyncHandler(async (req: Request, res: Response) => {
-    const student = await findStudentByRollNumber(req.params.slug, String(req.query.rollNumber), String(req.query.classValue), String(req.query.sectionValue));
+    const student = await findStudentByRollNumber(req.params.slug as string, String(req.query.rollNumber), String(req.query.classValue), String(req.query.sectionValue));
     res.json(apiResponse('Student fetched', student));
 });
 
 export const submitPublicStudentController = asyncHandler(async (req: Request, res: Response) => {
-    const student = await submitPublicStudent(req.params.slug, req.body);
+    const student = await submitPublicStudent(req.params.slug as string, req.body);
 
     await createAuditLog({
         schoolId: student.schoolId,

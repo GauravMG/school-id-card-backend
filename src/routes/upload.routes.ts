@@ -37,7 +37,7 @@ router.post(
             }
 
             const school = await prisma.school.update({
-                where: { id: req.params.schoolId },
+                where: { id: req.params.schoolId as string },
                 data,
                 include: {
                     logoFile: true,

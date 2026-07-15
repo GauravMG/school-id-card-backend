@@ -6,11 +6,11 @@ import { createStaff, listStaff, updateStaff } from './staff.service';
 import { createAuditLog } from '../../services/audit-log.service';
 
 export const createStaffController = asyncHandler(async (req: Request, res: Response) => {
-    const staff = await createStaff(req.params.schoolId, req.body);
+    const staff = await createStaff(req.params.schoolId as string, req.body);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.CREATE_STAFF,
         entityType: 'USER',
         entityId: staff.id,
@@ -23,11 +23,11 @@ export const createStaffController = asyncHandler(async (req: Request, res: Resp
 });
 
 export const updateStaffController = asyncHandler(async (req: Request, res: Response) => {
-    const staff = await updateStaff(req.params.staffId, req.body);
+    const staff = await updateStaff(req.params.staffId as string, req.body);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.UPDATE_STAFF,
         entityType: 'USER',
         entityId: staff.id,
@@ -40,6 +40,6 @@ export const updateStaffController = asyncHandler(async (req: Request, res: Resp
 });
 
 export const listStaffController = asyncHandler(async (req: Request, res: Response) => {
-    const list = await listStaff(req.params.schoolId);
+    const list = await listStaff(req.params.schoolId as string);
     res.json(apiResponse('Staff fetched', list));
 });

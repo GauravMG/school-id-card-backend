@@ -9,11 +9,11 @@ import { importBulkPhotos } from '../../services/bulk-photo-import.service';
 import { ApiError } from '../../utils/ApiError';
 
 export const createStudentController = asyncHandler(async (req: Request, res: Response) => {
-    const student = await createStudent(req.params.schoolId, req.body);
+    const student = await createStudent(req.params.schoolId as string, req.body);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.CREATE_STUDENT,
         entityType: 'STUDENT',
         entityId: student.id,
@@ -26,11 +26,11 @@ export const createStudentController = asyncHandler(async (req: Request, res: Re
 });
 
 export const updateStudentController = asyncHandler(async (req: Request, res: Response) => {
-    const student = await updateStudent(req.params.schoolId, req.params.studentId, req.body);
+    const student = await updateStudent(req.params.schoolId as string, req.params.studentId as string, req.body);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.UPDATE_STUDENT,
         entityType: 'STUDENT',
         entityId: student.id,
@@ -46,7 +46,7 @@ export const listStudentsController = asyncHandler(async (req: Request, res: Res
     const effectiveSchoolId =
         req.user?.actingAsSchoolId
             ? req.user.actingAsSchoolId
-            : req.params.schoolId;
+            : req.params.schoolId as string;
 
     const result = await listStudents(effectiveSchoolId!, req.query);
     res.json(apiResponse('Students fetched', result));
@@ -55,11 +55,11 @@ export const listStudentsController = asyncHandler(async (req: Request, res: Res
 export const uploadStudentPhotoController = asyncHandler(async (req: Request, res: Response) => {
     if (!req.file) throw new ApiError(400, 'Photo file is required');
 
-    const student = await uploadStudentPhoto(req.params.schoolId, req.params.studentId, req.file);
+    const student = await uploadStudentPhoto(req.params.schoolId as string, req.params.studentId as string, req.file);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.STUDENT_PHOTO_UPLOAD,
         entityType: 'STUDENT',
         entityId: student.id,
@@ -72,18 +72,18 @@ export const uploadStudentPhotoController = asyncHandler(async (req: Request, re
 });
 
 export const getStudentPhotoStatusController = asyncHandler(async (req: Request, res: Response) => {
-    const status = await getStudentPhotoStatus(req.params.schoolId, req.params.studentId);
+    const status = await getStudentPhotoStatus(req.params.schoolId as string, req.params.studentId as string);
     res.json(apiResponse('Student photo status fetched', status));
 });
 
 export const importStudentsCsvController = asyncHandler(async (req: Request, res: Response) => {
     if (!req.file) throw new ApiError(400, 'CSV file is required');
 
-    const students = await importStudentsFromCsv(req.params.schoolId, req.file.path);
+    const students = await importStudentsFromCsv(req.params.schoolId as string, req.file.path);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.CSV_IMPORT,
         entityType: 'STUDENT',
         metadata: { count: students.length, file: req.file.originalname },
@@ -102,11 +102,11 @@ export const bulkPhotoImportController = asyncHandler(async (req: Request, res: 
     if (!sheetFile) throw new ApiError(400, 'Roster sheet (CSV or Excel) is required');
     if (photoFiles.length === 0) throw new ApiError(400, 'At least one photo file is required');
 
-    const result = await importBulkPhotos(req.params.schoolId, sheetFile.path, photoFiles);
+    const result = await importBulkPhotos(req.params.schoolId as string, sheetFile.path, photoFiles);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.CSV_IMPORT,
         entityType: 'STUDENT',
         metadata: {

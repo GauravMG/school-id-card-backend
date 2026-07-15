@@ -6,11 +6,11 @@ import { exportSchoolStudentsPdf } from './export.service';
 import { createAuditLog } from '../../services/audit-log.service';
 
 export const exportSchoolPdfController = asyncHandler(async (req: Request, res: Response) => {
-    const result = await exportSchoolStudentsPdf(req.params.schoolId, req.body);
+    const result = await exportSchoolStudentsPdf(req.params.schoolId as string, req.body);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.EXPORT_PDF,
         entityType: 'EXPORT',
         entityId: result.fileAsset.id,

@@ -26,7 +26,7 @@ export const createSchoolController = asyncHandler(async (req: Request, res: Res
 });
 
 export const updateSchoolController = asyncHandler(async (req: Request, res: Response) => {
-    const school = await updateSchool(req.params.schoolId, req.body);
+    const school = await updateSchool(req.params.schoolId as string, req.body);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
@@ -48,24 +48,24 @@ export const listSchoolsController = asyncHandler(async (_req: Request, res: Res
 });
 
 export const getSchoolController = asyncHandler(async (req: Request, res: Response) => {
-    const school = await getSchoolById(req.params.schoolId);
+    const school = await getSchoolById(req.params.schoolId as string);
     res.json(apiResponse('School fetched', school));
 });
 
 export const getSchoolFontsController = asyncHandler(async (req: Request, res: Response) => {
-    const fonts = await getSchoolFontMap(req.params.schoolId);
+    const fonts = await getSchoolFontMap(req.params.schoolId as string);
     res.json(apiResponse('School fonts fetched', { fonts, catalog: FONT_CATALOG }));
 });
 
 export const updateSchoolFontsController = asyncHandler(async (req: Request, res: Response) => {
-    const fonts = await updateSchoolFontMap(req.params.schoolId, req.body);
+    const fonts = await updateSchoolFontMap(req.params.schoolId as string, req.body);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.UPDATE_SCHOOL,
         entityType: 'SCHOOL_FONTS',
-        entityId: req.params.schoolId,
+        entityId: req.params.schoolId as string,
         metadata: req.body,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent']
@@ -75,19 +75,19 @@ export const updateSchoolFontsController = asyncHandler(async (req: Request, res
 });
 
 export const getSchoolFormFieldsController = asyncHandler(async (req: Request, res: Response) => {
-    const fields = await getSchoolFormFields(req.params.schoolId);
+    const fields = await getSchoolFormFields(req.params.schoolId as string);
     res.json(apiResponse('School form fields fetched', fields));
 });
 
 export const updateSchoolFormFieldsController = asyncHandler(async (req: Request, res: Response) => {
-    const fields = await updateSchoolFormFields(req.params.schoolId, req.body.fields || []);
+    const fields = await updateSchoolFormFields(req.params.schoolId as string, req.body.fields || []);
 
     await createAuditLog({
         actorUserId: req.user?.userId,
-        schoolId: req.params.schoolId,
+        schoolId: req.params.schoolId as string,
         action: AuditAction.UPDATE_SCHOOL,
         entityType: 'SCHOOL_FORM_FIELDS',
-        entityId: req.params.schoolId,
+        entityId: req.params.schoolId as string,
         metadata: req.body,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent']

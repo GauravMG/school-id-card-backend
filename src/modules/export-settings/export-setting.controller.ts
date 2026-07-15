@@ -29,12 +29,12 @@ export const createExportSettingController = asyncHandler(async (req: Request, r
 export const updateExportSettingController = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
     const { cardsPerPage, isActive, showCropMarks } = req.body;
-    const setting = await updateExportSetting(id, { cardsPerPage, isActive, showCropMarks });
+    const setting = await updateExportSetting(id as string, { cardsPerPage, isActive, showCropMarks });
     res.json(apiResponse('Export setting updated', setting));
 });
 
 export const deleteExportSettingController = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    await deleteExportSetting(id);
+    await deleteExportSetting(id as string);
     res.json(apiResponse('Export setting deleted', null));
 });

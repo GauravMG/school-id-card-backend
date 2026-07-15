@@ -71,6 +71,8 @@ async function callGptImage1(studentPngPath: string, uniformPngPath: string): Pr
         size: '1024x1536',   // portrait orientation — closest to 600×800
     });
 
+    if (!response?.data) throw new Error('gpt-image-1 returned no image data');
+
     const b64 = response.data[0]?.b64_json;
     if (!b64) throw new Error('gpt-image-1 returned no image data');
 
