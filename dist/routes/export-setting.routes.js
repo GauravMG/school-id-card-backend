@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const export_setting_controller_1 = require("../modules/export-settings/export-setting.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const role_middleware_1 = require("../middlewares/role.middleware");
+const router = (0, express_1.Router)();
+router.get('/active', auth_middleware_1.requireAuth, (0, role_middleware_1.allowRoles)('SUPERADMIN', 'SCHOOL_STAFF'), export_setting_controller_1.listActiveExportSettingsController);
+router.get('/', auth_middleware_1.requireAuth, (0, role_middleware_1.allowRoles)('SUPERADMIN'), export_setting_controller_1.listExportSettingsController);
+router.post('/', auth_middleware_1.requireAuth, (0, role_middleware_1.allowRoles)('SUPERADMIN'), export_setting_controller_1.createExportSettingController);
+router.patch('/:id', auth_middleware_1.requireAuth, (0, role_middleware_1.allowRoles)('SUPERADMIN'), export_setting_controller_1.updateExportSettingController);
+router.delete('/:id', auth_middleware_1.requireAuth, (0, role_middleware_1.allowRoles)('SUPERADMIN'), export_setting_controller_1.deleteExportSettingController);
+exports.default = router;

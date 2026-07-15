@@ -1,0 +1,28 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_routes_1 = __importDefault(require("./auth.routes"));
+const school_routes_1 = __importDefault(require("./school.routes"));
+const staff_routes_1 = __importDefault(require("./staff.routes"));
+const student_routes_1 = __importDefault(require("./student.routes"));
+const public_routes_1 = __importDefault(require("./public.routes"));
+const upload_routes_1 = __importDefault(require("./upload.routes"));
+const template_routes_1 = __importDefault(require("./template.routes"));
+const export_routes_1 = __importDefault(require("./export.routes"));
+const export_setting_routes_1 = __importDefault(require("./export-setting.routes"));
+const audit_routes_1 = __importDefault(require("./audit.routes"));
+const router = (0, express_1.Router)();
+router.use('/auth', auth_routes_1.default);
+router.use('/schools', school_routes_1.default);
+router.use('/staff', staff_routes_1.default);
+router.use('/students', student_routes_1.default);
+router.use('/public', public_routes_1.default);
+router.use('/uploads', upload_routes_1.default);
+router.use('/templates', template_routes_1.default);
+router.use('/exports', export_routes_1.default);
+router.use('/export-settings', export_setting_routes_1.default);
+router.use('/audit-logs', audit_routes_1.default);
+exports.default = router;
