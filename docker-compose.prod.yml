@@ -3,49 +3,58 @@ version: "3.9"
 services:
   postgres:
     image: postgres:16
-    restart: always
+    container_name: school-id-postgres
+    restart: unless-stopped
+
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: school_id_cards
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
     networks:
       - school-network
 
   api:
+    container_name: school-id-api
+
     build:
       context: .
       dockerfile: Dockerfile.prod
-    restart: always
-    ports:
-      - "127.0.0.1:4000:4000"
+
+    restart: unless-stopped
+
     env_file:
       - .env
+
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
+    ports:
+      - "127.0.0.1:4000:4000"
+
     volumes:
       - uploads:/app/uploads
-    expose:
-      - "4000"
-    networks:
-      - school-network
+      - imgly_model_cache:/root/.cache
 
-  web:
-    build:
-      context: ./web
-      dockerfile: Dockerfile.prod
-    restart: always
-    ports:
-      - "127.0.0.1:8080:80"
-    expose:
-      - "80"
     networks:
       - school-network
 
 volumes:
   postgres_data:
   uploads:
+  imgly_model_cache:
 
 networks:
   school-network:
+    driver: bridge
